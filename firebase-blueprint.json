@@ -1,0 +1,91 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Artículos de belleza, maquillaje y cuidado personal en el catálogo de Dulzara.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 200 },
+        "slug": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 3000 },
+        "shortDescription": { "type": "string", "maxLength": 500 },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "category": { "type": "string", "maxLength": 64 },
+        "stock": { "type": "number" },
+        "imageUrl": { "type": "string", "maxLength": 1000 },
+        "isFeatured": { "type": "boolean" },
+        "benefits": { "type": "array" },
+        "ingredients": { "type": "string", "maxLength": 2000 },
+        "howToUse": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "name", "price", "category", "stock", "imageUrl"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Pedidos de clientes para despacho con confirmación por WhatsApp.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "customer": { "type": "object" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "shippingCost": { "type": "number" },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["pendiente", "confirmado", "preparando", "enviado", "entregado"] },
+        "statusNotes": { "type": "string", "maxLength": 1000 },
+        "whatsappSent": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "customer", "items", "subtotal", "shippingCost", "total", "status"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Usuarios administradores autorizados para gestionar la tienda.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["superadmin", "admin"] },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["email", "role"]
+    },
+    "StoreSettings": {
+      "title": "StoreSettings",
+      "description": "Configuración general de la tienda Dulzara y tarifas de envío en Colombia.",
+      "type": "object",
+      "properties": {
+        "brandName": { "type": "string", "maxLength": 100 },
+        "whatsappNumber": { "type": "string", "maxLength": 30 },
+        "freeShippingThreshold": { "type": "number" },
+        "standardShippingCost": { "type": "number" },
+        "instagramHandle": { "type": "string", "maxLength": 100 },
+        "contactEmail": { "type": "string", "maxLength": 100 },
+        "cityOrigin": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["brandName", "whatsappNumber", "freeShippingThreshold", "standardShippingCost"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Colección de productos visible públicamente para clientes y administrada por la tienda."
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Colección de pedidos creados por clientes y gestionados por administradores."
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Colección de control de acceso para administradores autorizados."
+    },
+    "/settings/store": {
+      "schema": "StoreSettings",
+      "description": "Documento único de configuración de la tienda."
+    }
+  }
+}

@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Security Helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // 1. Catálogo de Productos
+    // Permite lectura pública y operaciones de inventario/catálogo gestionadas desde la tienda y el panel de Dulzara
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create: if isValidId(productId) &&
+        incoming().name is string && incoming().name.size() > 0 && incoming().name.size() <= 200 &&
+        incoming().price is number && incoming().price >= 0 &&
+        incoming().stock is number && incoming().stock >= 0;
+      allow update: if isValidId(productId);
+      allow delete: if true;
+    }
+
+    // 2. Pedidos de Clientes
+    // Permite creación pública de pedidos y gestión de estados/notas de despacho
+    match /orders/{orderId} {
+      allow get, list: if true;
+      allow create: if isValidId(orderId) &&
+        incoming().id == orderId &&
+        incoming().customer is map &&
+        incoming().items is list && incoming().items.size() > 0 &&
+        incoming().total is number && incoming().total > 0;
+      allow update: if isValidId(orderId);
+      allow delete: if true;
+    }
+
+    // 3. Control de Acceso Administrativo
+    match /admins/{adminId} {
+      allow read, write: if true;
+    }
+
+    // 4. Parámetros de la Tienda (WhatsApp, tarifas, Instagram, Ciudad)
+    match /settings/{settingId} {
+      allow get, list: if true;
+      allow create, update: if true;
+      allow delete: if true;
+    }
+  }
+}
