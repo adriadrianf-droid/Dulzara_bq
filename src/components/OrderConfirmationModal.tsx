@@ -67,24 +67,25 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
               </span>
             </div>
             <p className="text-xs text-emerald-800">
-              Si la ventana de WhatsApp no se abrió automáticamente, presiona el botón a continuación para abrir la conversación con tu pedido ya redactado:
+              Toca el botón verde a continuación para abrir WhatsApp y enviar tu mensaje con el resumen ya redactado:
             </p>
-            <div className="flex flex-col sm:flex-row gap-2 pt-1">
+            <div className="flex flex-col sm:flex-row gap-2.5 pt-1.5">
               <a
                 href={whatsappUrl}
                 target="_blank"
-                rel="noreferrer"
-                className="flex-1 py-2.5 px-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-medium text-xs rounded-full text-center flex items-center justify-center gap-2 transition-colors"
+                rel="noopener noreferrer"
+                className="flex-1 py-3 px-5 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-sm rounded-full text-center flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all active:scale-98"
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>Abrir Chat de WhatsApp</span>
+                <MessageCircle className="w-5 h-5 fill-white text-[#25D366]" />
+                <span>ABRIR CHAT DE WHATSAPP</span>
               </a>
               <button
+                type="button"
                 onClick={handleCopyMessage}
-                className="py-2.5 px-3 bg-white border border-emerald-300 text-emerald-900 text-xs font-medium rounded-full hover:bg-emerald-50 transition-colors flex items-center justify-center gap-1.5"
+                className="py-3 px-4 bg-white border border-emerald-300 text-emerald-900 text-xs font-semibold rounded-full hover:bg-emerald-50 transition-colors flex items-center justify-center gap-1.5 shrink-0"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-700" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? '¡Copiado!' : 'Copiar Texto'}</span>
+                {copied ? <Check className="w-4 h-4 text-emerald-700" /> : <Copy className="w-4 h-4 text-emerald-700" />}
+                <span>{copied ? '¡Copiado!' : 'Copiar Mensaje'}</span>
               </button>
             </div>
           </div>

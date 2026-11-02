@@ -96,11 +96,25 @@ ${itemsText}
 }
 
 /**
- * Creates the direct wa.me URL
+ * Creates the direct wa.me URL with normalized international prefix
  */
 export function createWhatsAppUrl(phoneNumber: string, message: string): string {
-  // Clean phone number: remove spaces, dashes, plus sign
-  const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+  // Clean phone number: keep only digits
+  let cleanPhone = (phoneNumber || '').replace(/[^0-9]/g, '');
+
+  // If starts with 0 (e.g. Colombian trunk prefix mistake), strip leading zeros
+  cleanPhone = cleanPhone.replace(/^0+/, '');
+
+  // If 10 digits starting with 3 (Colombian mobile e.g. 3001234567, 3124567890), prepend Colombia country code 57
+  if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {
+    cleanPhone = `57${cleanPhone}`;
+  }
+
+  // Fallback if empty or invalid
+  if (!cleanPhone) {
+    cleanPhone = '573124567890';
+  }
+
   const encodedMessage = encodeURIComponent(message);
   return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
 }
