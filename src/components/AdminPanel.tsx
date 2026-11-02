@@ -21,7 +21,8 @@ import {
   Settings,
   Layers,
   Sparkles,
-  Database
+  Database,
+  Loader2
 } from 'lucide-react';
 import { Product, Order, OrderStatus, StoreSettings } from '../types/store';
 import { formatCOP, formatDateCO, createWhatsAppUrl } from '../utils/formatters';
@@ -95,6 +96,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [settingsSavedMessage, setSettingsSavedMessage] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [adminActionFeedback, setAdminActionFeedback] = useState<string | null>(null);
+
+  // In-app Confirmation Modal States (replaces blocked native confirm dialogs)
+  const [orderToDelete, setOrderToDelete] = useState<{ id: string; customerName: string; total: number } | null>(null);
+  const [isDeletingOrder, setIsDeletingOrder] = useState(false);
+
+  const [productToDelete, setProductToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeletingProduct, setIsDeletingProduct] = useState(false);
+
+  const [showResetCatalogModal, setShowResetCatalogModal] = useState(false);
+  const [isResettingCatalog, setIsResettingCatalog] = useState(false);
 
   const showFeedback = (msg: string) => {
     setAdminActionFeedback(msg);
@@ -256,12 +267,51 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
-  // Delete product
-  const handleDeleteProduct = async (productId: string, productName: string) => {
-    if (confirm(`¿Estás seguro de eliminar "${productName}" del catálogo?`)) {
-      await storeService.deleteProduct(productId);
+  // Delete product - open confirmation modal
+  const handleDeleteProductClick = (productId: string, productName: string) => {
+    setProductToDelete({ id: productId, name: productName });
+  };
+
+  const handleConfirmDeleteProduct = async () => {
+    if (!productToDelete) return;
+    setIsDeletingProduct(true);
+    try {
+      const prodName = productToDelete.name;
+      await storeService.deleteProduct(productToDelete.id);
       onRefreshData();
-      showFeedback(`Producto "${productName}" eliminado.`);
+      showFeedback(`Producto "${prodName}" eliminado correctamente del catálogo.`);
+      setProductToDelete(null);
+    } catch (e) {
+      console.error('Error deleting product:', e);
+      showFeedback('Ocurrió un error al eliminar el producto. Inténtalo de nuevo.');
+    } finally {
+      setIsDeletingProduct(false);
+    }
+  };
+
+  // Delete order - open confirmation modal
+  const handleDeleteOrderClick = (orderId: string, customerName: string, total: number) => {
+    setOrderToDelete({ id: orderId, customerName, total });
+  };
+
+  const handleConfirmDeleteOrder = async () => {
+    if (!orderToDelete) return;
+    setIsDeletingOrder(true);
+    try {
+      const targetId = orderToDelete.id;
+      const targetCustomer = orderToDelete.customerName;
+      await storeService.deleteOrder(targetId);
+      onRefreshData();
+      if (selectedOrder?.id === targetId) {
+        setSelectedOrder(null);
+      }
+      showFeedback(`Pedido #${targetId} de "${targetCustomer}" eliminado y espacio liberado.`);
+      setOrderToDelete(null);
+    } catch (e) {
+      console.error('Error deleting order:', e);
+      showFeedback('Ocurrió un error al eliminar el pedido.');
+    } finally {
+      setIsDeletingOrder(false);
     }
   };
 
@@ -283,10 +333,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   };
 
   // Reset demo catalog
-  const handleResetCatalog = async () => {
-    if (confirm('¿Restablecer el catálogo de Dulzara a los valores iniciales en Firestore?')) {
+  const handleConfirmResetCatalog = async () => {
+    setIsResettingCatalog(true);
+    try {
       await storeService.resetCatalogToDefault();
       onRefreshData();
+      showFeedback('Catálogo restablecido correctamente con los 10 productos oficiales.');
+      setShowResetCatalogModal(false);
+    } catch (e) {
+      console.error('Error resetting catalog:', e);
+      showFeedback('No se pudo restablecer el catálogo.');
+    } finally {
+      setIsResettingCatalog(false);
     }
   };
 
@@ -610,12 +668,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                               </select>
                             </td>
                             <td className="py-3.5 px-4 text-center">
-                              <button
-                                onClick={() => setSelectedOrder(order)}
-                                className="px-2.5 py-1 text-xs font-medium text-[#B9788B] hover:bg-[#F7E5E9] rounded-lg border border-[#E8BFCB] transition-colors"
-                              >
-                                Ver Detalle
-                              </button>
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button
+                                  onClick={() => setSelectedOrder(order)}
+                                  className="px-2.5 py-1 text-xs font-medium text-[#B9788B] hover:bg-[#F7E5E9] rounded-lg border border-[#E8BFCB] transition-colors"
+                                  title="Ver detalles completos del pedido"
+                                >
+                                  Ver Detalle
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteOrderClick(order.id, order.customer.fullName, order.total)}
+                                  className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg border border-red-200 transition-colors"
+                                  title="Eliminar pedido y liberar espacio"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -755,7 +823,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                 <Edit2 className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => handleDeleteProduct(prod.id, prod.name)}
+                                onClick={() => handleDeleteProductClick(prod.id, prod.name)}
                                 className="p-1.5 text-[#382A30]/50 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                 title="Eliminar producto"
                               >
@@ -907,7 +975,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
                   <button
                     type="button"
-                    onClick={handleResetCatalog}
+                    onClick={() => setShowResetCatalogModal(true)}
                     className="text-xs text-red-700 hover:underline flex items-center gap-1"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
@@ -1091,8 +1159,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
             </div>
 
-            <div className="p-4 border-t border-[#F7E5E9] bg-[#FFFDF9] flex justify-end">
+            <div className="p-4 border-t border-[#F7E5E9] bg-[#FFFDF9] flex justify-between items-center">
               <button
+                type="button"
+                onClick={() => handleDeleteOrderClick(selectedOrder.id, selectedOrder.customer.fullName, selectedOrder.total)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-xl text-xs font-medium border border-red-200 transition-colors"
+                title="Eliminar este pedido permanentemente"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Eliminar Pedido
+              </button>
+              <button
+                type="button"
                 onClick={() => setSelectedOrder(null)}
                 className="px-5 py-2 bg-[#382A30] text-white text-xs font-medium rounded-full hover:bg-[#4a3941]"
               >
@@ -1352,6 +1430,179 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
             </form>
 
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 1: Confirm Order Deletion */}
+      {orderToDelete && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="fixed inset-0" onClick={() => !isDeletingOrder && setOrderToDelete(null)} />
+          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-red-100 z-10 animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-14 h-14 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto border border-red-200 shadow-xs">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              
+              <div>
+                <h3 className="text-base font-bold text-[#382A30]">
+                  ¿Eliminar pedido permanentemente?
+                </h3>
+                <p className="text-xs text-[#382A30]/70 mt-1">
+                  Esta acción liberará espacio en la base de datos de Dulzara eliminando los datos del cliente y pedido. No se puede revertir.
+                </p>
+              </div>
+
+              <div className="p-4 bg-[#FFFDF9] rounded-2xl border border-[#E8BFCB]/50 text-left text-xs space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[#382A30]/60">Referencia:</span>
+                  <span className="font-mono font-bold text-[#382A30] bg-[#F7E5E9]/50 px-2 py-0.5 rounded-md">
+                    #{orderToDelete.id}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[#382A30]/60">Cliente:</span>
+                  <span className="font-semibold text-[#382A30]">{orderToDelete.customerName}</span>
+                </div>
+                <div className="flex justify-between items-center pt-1 border-t border-[#F7E5E9]">
+                  <span className="text-[#382A30]/60">Total:</span>
+                  <span className="font-bold text-[#B9788B] tabular-nums">{formatCOP(orderToDelete.total)}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeletingOrder}
+                  onClick={() => setOrderToDelete(null)}
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-[#382A30] bg-[#F7E5E9]/60 hover:bg-[#F7E5E9] transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingOrder}
+                  onClick={handleConfirmDeleteOrder}
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  {isDeletingOrder ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      <span>Sí, eliminar</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Confirm Product Deletion */}
+      {productToDelete && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="fixed inset-0" onClick={() => !isDeletingProduct && setProductToDelete(null)} />
+          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-red-100 z-10 animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-14 h-14 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto border border-red-200 shadow-xs">
+                <Trash2 className="w-6 h-6" />
+              </div>
+
+              <div>
+                <h3 className="text-base font-bold text-[#382A30]">
+                  ¿Eliminar producto del catálogo?
+                </h3>
+                <p className="text-xs text-[#382A30]/70 mt-1">
+                  Se eliminará <span className="font-semibold text-[#382A30]">"{productToDelete.name}"</span> de la tienda y del inventario en Firestore.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeletingProduct}
+                  onClick={() => setProductToDelete(null)}
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-[#382A30] bg-[#F7E5E9]/60 hover:bg-[#F7E5E9] transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeletingProduct}
+                  onClick={handleConfirmDeleteProduct}
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  {isDeletingProduct ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Eliminando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      <span>Eliminar producto</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: Confirm Reset Catalog */}
+      {showResetCatalogModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="fixed inset-0" onClick={() => !isResettingCatalog && setShowResetCatalogModal(false)} />
+          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-amber-100 z-10 animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-14 h-14 bg-amber-50 text-amber-700 rounded-full flex items-center justify-center mx-auto border border-amber-200 shadow-xs">
+                <RotateCcw className="w-6 h-6" />
+              </div>
+
+              <div>
+                <h3 className="text-base font-bold text-[#382A30]">
+                  ¿Restablecer catálogo oficial?
+                </h3>
+                <p className="text-xs text-[#382A30]/70 mt-1">
+                  Esta acción restaurará los 10 productos de belleza predeterminados de Dulzara con sus stocks y descripciones iniciales.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isResettingCatalog}
+                  onClick={() => setShowResetCatalogModal(false)}
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-[#382A30] bg-[#F7E5E9]/60 hover:bg-[#F7E5E9] transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={isResettingCatalog}
+                  onClick={handleConfirmResetCatalog}
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 transition-colors shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  {isResettingCatalog ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Restableciendo...</span>
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="w-4 h-4" />
+                      <span>Restablecer</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
