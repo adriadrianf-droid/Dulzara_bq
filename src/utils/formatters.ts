@@ -57,7 +57,7 @@ export function buildWhatsAppMessage(
   const itemsText = items
     .map(
       (item, idx) =>
-        `${idx + 1}. *${item.name}*\n   Cantidad: ${item.quantity} | Unitario: ${formatCOP(item.price)}\n   Subtotal: ${formatCOP(item.price * item.quantity)}`
+        `${idx + 1}. *${item.name}*\n   *Cantidad:* ${item.quantity} | *Unitario:* ${formatCOP(item.price)}\n   *Subtotal:* ${formatCOP(item.price * item.quantity)}`
     )
     .join('\n\n');
 
@@ -65,34 +65,34 @@ export function buildWhatsAppMessage(
     shippingCost === 0 ? '¡GRATIS! (Superó monto mínimo)' : formatCOP(shippingCost);
 
   const notesText = customer.notes && customer.notes.trim()
-    ? `\n📝 *Observaciones:* ${customer.notes.trim()}`
+    ? `\n*Observaciones:* ${customer.notes.trim()}`
     : '';
 
-  return `🌸 *NUEVO PEDIDO DULZARA* 🌸
+  return `*NUEVO PEDIDO DULZARA*
 Ref: *#${orderId}*
-━━━━━━━━━━━━━━━━━━━━
+*----------------------------------------*
 
-✨ *DATOS DE ENTREGA:*
-👤 *Cliente:* ${customer.fullName}
-📱 *Teléfono:* ${customer.phone}
-📍 *Departamento:* ${customer.department}
-🏙️ *Ciudad:* ${customer.city}
-🏠 *Dirección:* ${customer.address}
-📌 *Barrio:* ${customer.neighborhood}${notesText}
+*DATOS DE ENTREGA:*
+*Cliente:* ${customer.fullName}
+*Teléfono:* ${customer.phone}
+*Departamento:* ${customer.department}
+*Ciudad:* ${customer.city}
+*Dirección:* ${customer.address}
+*Barrio:* ${customer.neighborhood}${notesText}
 
-━━━━━━━━━━━━━━━━━━━━
-🛍️ *RESUMEN DE PRODUCTOS:*
+*----------------------------------------*
+*RESUMEN DE PRODUCTOS:*
 
 ${itemsText}
 
-━━━━━━━━━━━━━━━━━━━━
-💵 *TOTALES:*
-• Subtotal: ${formatCOP(subtotal)}
-• Envío: ${shippingText}
+*----------------------------------------*
+*TOTALES:*
+• *Subtotal:* ${formatCOP(subtotal)}
+• *Envío:* ${shippingText}
 • *TOTAL A PAGAR:* *${formatCOP(total)}*
 
-━━━━━━━━━━━━━━━━━━━━
-💬 *Hola equipo Dulzara,* he creado mi pedido a través de la tienda web y deseo confirmarlo. ¡Quedo atento(a) para coordinar el envío! 💖`;
+*----------------------------------------*
+*Hola equipo Dulzara,* he creado mi pedido a través de la tienda web y deseo confirmarlo. ¡Quedo atento(a) para coordinar el envío!`;
 }
 
 /**

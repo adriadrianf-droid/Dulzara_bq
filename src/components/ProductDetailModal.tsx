@@ -32,7 +32,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   };
 
   const handleDirectWhatsAppQuestion = () => {
-    const msg = `🌸 Hola Dulzara! Me interesa el producto: *${product.name}* (Ref: ${product.id}) con precio de ${formatCOP(product.price)}. ¿Tienen disponibilidad y me pueden dar más información?`;
+    const msg = `¡Hola Dulzara! Me interesa el producto: *${product.name}* (Ref: ${product.id}) con precio de ${formatCOP(product.price)}. ¿Tienen disponibilidad y me pueden dar más información?`;
     window.open(createWhatsAppUrl(whatsappNumber, msg), '_blank');
   };
 

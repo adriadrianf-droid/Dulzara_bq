@@ -16,7 +16,7 @@ export const Footer: React.FC<FooterProps> = ({
 }) => {
   const whatsappUrl = createWhatsAppUrl(
     settings.whatsappNumber,
-    '🌸 Hola equipo Dulzara, tengo una consulta sobre sus productos.'
+    '¡Hola equipo Dulzara! Tengo una consulta sobre sus productos.'
   );
 
   const cleanInsta = settings.instagramHandle ? settings.instagramHandle.replace('@', '').trim() : 'dulzara_bq';

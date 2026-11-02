@@ -206,7 +206,7 @@ export default function App() {
 
   // WhatsApp general consultation
   const handleOpenWhatsAppAdvice = () => {
-    const msg = '🌸 ¡Hola equipo Dulzara! Me gustaría recibir asesoría personalizada sobre sus productos y tonos.';
+    const msg = '¡Hola equipo Dulzara! Me gustaría recibir asesoría personalizada sobre sus productos y tonos.';
     window.open(createWhatsAppUrl(settings.whatsappNumber, msg), '_blank');
   };
 
