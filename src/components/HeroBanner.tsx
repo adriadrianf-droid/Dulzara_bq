@@ -19,7 +19,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   const subtitle =
     settings?.heroSubtitle ||
     'Maquillaje y cuidado personal elegido con amor para resaltar lo linda que eres. Arma tu bolsita a tu ritmo y pide fácil por WhatsApp.';
-  const badgeText = settings?.heroBadgeText || 'Hecho con amor para ti 💕';
+  const rawBadge = settings?.heroBadgeText;
+  const isBadgeHidden = rawBadge?.trim() === '.';
+  const badgeText = rawBadge !== undefined ? rawBadge.trim() : 'Hecho con amor para ti 💕';
   let buttonText = settings?.heroButtonText || 'Explorar Catálogo ✦';
   if (buttonText.includes('favoritos') || buttonText === 'Explorar Catálogo') {
     buttonText = 'Explorar Catálogo ✦';
@@ -137,10 +139,16 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                 />
 
                 {/* Única etiqueta flotante delicada y limpia en una esquina con icono de corazón */}
-                <div className="absolute bottom-2.5 left-2.5 sm:bottom-4 sm:left-4 bg-white/95 backdrop-blur-md rounded-full px-3 sm:px-4 py-1.5 sm:py-2 border border-[#E8BFCB] shadow-md flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-semibold text-[#382A30]">
-                  <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B9788B] fill-[#B9788B]" />
-                  <span>{badgeText}</span>
-                </div>
+                {!isBadgeHidden && (
+                  <div
+                    className={`absolute bottom-2.5 left-2.5 sm:bottom-4 sm:left-4 bg-white/95 backdrop-blur-md rounded-full ${
+                      badgeText ? 'px-3 sm:px-4 py-1.5 sm:py-2 gap-1.5 sm:gap-2' : 'p-2 sm:p-2.5'
+                    } border border-[#E8BFCB] shadow-md flex items-center text-[11px] sm:text-xs font-semibold text-[#382A30]`}
+                  >
+                    <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B9788B] fill-[#B9788B]" />
+                    {badgeText ? <span>{badgeText}</span> : null}
+                  </div>
+                )}
               </div>
 
               {/* Sutil destello de 4 puntas de marca cerca a la foto */}

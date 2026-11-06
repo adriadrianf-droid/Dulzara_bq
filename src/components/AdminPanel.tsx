@@ -23,7 +23,8 @@ import {
   Database,
   Loader2,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Heart
 } from 'lucide-react';
 import { Product, Order, OrderStatus, StoreSettings } from '../types/store';
 import { formatCOP, formatDateCO } from '../utils/formatters';
@@ -997,9 +998,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     )}
                     
                     {/* Badge preview overlay */}
-                    <div className="absolute bottom-2.5 left-2.5 bg-white/95 backdrop-blur-md rounded-full px-3 py-1 border border-[#E8BFCB] shadow-xs text-[11px] font-medium text-[#382A30] flex items-center gap-1">
-                      <span>{settingsForm.heroBadgeText || 'Hecho con amor para ti 💕'}</span>
-                    </div>
+                    {settingsForm.heroBadgeText?.trim() !== '.' && (
+                      <div
+                        className={`absolute bottom-2.5 left-2.5 bg-white/95 backdrop-blur-md rounded-full ${
+                          settingsForm.heroBadgeText?.trim() ? 'px-3 py-1 gap-1' : 'p-1.5'
+                        } border border-[#E8BFCB] shadow-xs text-[11px] font-medium text-[#382A30] flex items-center`}
+                      >
+                        <Heart className="w-3 h-3 text-[#B9788B] fill-[#B9788B]" />
+                        {settingsForm.heroBadgeText?.trim() ? (
+                          <span>{settingsForm.heroBadgeText.trim()}</span>
+                        ) : null}
+                      </div>
+                    )}
 
                     {isCompressingHeroImage && (
                       <div className="absolute inset-0 bg-black/40 backdrop-blur-xs flex flex-col items-center justify-center text-white text-xs font-medium gap-2">
@@ -1108,13 +1118,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       </label>
                       <input
                         type="text"
-                        value={settingsForm.heroBadgeText || ''}
+                        value={settingsForm.heroBadgeText ?? ''}
                         onChange={(e) =>
                           setSettingsForm({ ...settingsForm, heroBadgeText: e.target.value })
                         }
-                        placeholder="Hecho con amor para ti 💕"
+                        placeholder="Dejar vacío para solo corazón, o '.' para quitar"
                         className="w-full px-3.5 py-2 rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"
                       />
+                      <p className="text-[11px] text-[#382A30]/65 mt-1">
+                        Escribe un punto <strong className="text-[#B9788B]">"."</strong> para quitarla por completo, o déjala en blanco para que solo aparezca el corazón.
+                      </p>
                     </div>
 
                     <div>
