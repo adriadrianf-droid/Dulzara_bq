@@ -1,6 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
-  Sparkles,
   ArrowUpDown,
   Filter,
   CheckCircle,
@@ -198,9 +197,6 @@ export default function App() {
     return 0;
   });
 
-  // Featured spotlight items
-  const featuredProducts = products.filter((p) => p.isFeatured).slice(0, 4);
-
   // Order success handler
   const handleOrderSuccess = (order: Order, whatsappUrl: string) => {
     handleClearCart();
@@ -345,49 +341,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* Featured Selection Section */}
-        {featuredProducts.length > 0 && !searchQuery && !activeCategory && (
-          <section className="py-14 sm:py-20 bg-gradient-to-b from-[#FFFDF9] via-[#F7E5E9]/20 to-[#FFFDF9]">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-              
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#B9788B]">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Selección Destacada</span>
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl font-serif-brand font-semibold text-[#382A30] mt-1">
-                    Los esenciales más amados de Dulzara
-                  </h2>
-                </div>
-                <button
-                  onClick={() => {
-                    const el = document.getElementById('catalogo');
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="text-xs font-semibold text-[#B9788B] hover:text-[#a6687a] underline underline-offset-4 self-start sm:self-auto"
-                >
-                  Ver todos los {products.length} productos
-                </button>
-              </div>
-
-              {/* Grid 4 columns desktop */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                {featuredProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onAddToCart={(p) => handleAddToCart(p, 1)}
-                    onQuickView={setSelectedProduct}
-                    isItemInCart={cartItems.some((ci) => ci.product.id === product.id)}
-                  />
-                ))}
-              </div>
-
-            </div>
-          </section>
-        )}
-
         {/* Main Catalog Section with scroll-mt-24 for sticky header clearance */}
         <section id="catalogo" className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 scroll-mt-24">
           
@@ -480,7 +433,7 @@ export default function App() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div id="grid-productos" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {sortedProducts.map((product) => (
                 <ProductCard
                   key={product.id}

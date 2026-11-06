@@ -24,9 +24,13 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
 
   const handleCategorySelect = (categoryId: string | null) => {
     onSelectCategory(categoryId);
-    const catalogEl = document.getElementById('catalogo');
-    if (catalogEl) {
-      catalogEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const gridEl = document.getElementById('grid-productos');
+    if (gridEl) {
+      const rect = gridEl.getBoundingClientRect();
+      // If user has scrolled past the grid, smoothly bring start of grid into view
+      if (rect.top < 80) {
+        gridEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   };
 

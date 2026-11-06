@@ -32,10 +32,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        {/* Subtle status tag (max 1 tag, zero badge spam) */}
+        {/* Discount badge */}
         {product.originalPrice && product.originalPrice > product.price && (
-          <div className="absolute top-3 left-3 bg-[#382A30] text-white text-[11px] font-medium tracking-wide px-2.5 py-1 rounded-md">
-            Descuento
+          <div className="bg-[#B9788B] text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm absolute top-3 left-3 tracking-wide flex items-center gap-1">
+            <span aria-hidden="true">✦</span>
+            <span>Descuento</span>
           </div>
         )}
 
