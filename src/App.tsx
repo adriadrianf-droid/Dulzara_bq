@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   Sparkles,
-  ShoppingBag,
   ArrowUpDown,
   Filter,
   CheckCircle,
@@ -24,9 +23,15 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { CartDrawer } from './components/CartDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
 import { OrderConfirmationModal } from './components/OrderConfirmationModal';
-import { AdminLoginModal } from './components/AdminLoginModal';
-import { AdminPanel } from './components/AdminPanel';
 import { Footer } from './components/Footer';
+
+// Lazy load heavy admin-only modules to optimize mobile shopping performance
+const AdminLoginModal = lazy(() =>
+  import('./components/AdminLoginModal').then((m) => ({ default: m.AdminLoginModal }))
+);
+const AdminPanel = lazy(() =>
+  import('./components/AdminPanel').then((m) => ({ default: m.AdminPanel }))
+);
 
 export default function App() {
   // Store Data state
@@ -213,19 +218,28 @@ export default function App() {
   // If Admin Panel is opened and user is authenticated
   if (isAdminPanelActive && adminUser) {
     return (
-      <AdminPanel
-        user={adminUser}
-        onLogout={async () => {
-          await authService.logout();
-          setAdminUser(null);
-          setIsAdminPanelActive(false);
-        }}
-        onBackToStore={() => setIsAdminPanelActive(false)}
-        products={products}
-        orders={orders}
-        settings={settings}
-        onRefreshData={loadData}
-      />
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-[#FFFDF9] flex flex-col items-center justify-center text-xs text-[#382A30]/70 gap-2">
+            <span className="w-6 h-6 border-2 border-[#B9788B] border-t-transparent rounded-full animate-spin" />
+            <span>Cargando panel administrativo...</span>
+          </div>
+        }
+      >
+        <AdminPanel
+          user={adminUser}
+          onLogout={async () => {
+            await authService.logout();
+            setAdminUser(null);
+            setIsAdminPanelActive(false);
+          }}
+          onBackToStore={() => setIsAdminPanelActive(false)}
+          products={products}
+          orders={orders}
+          settings={settings}
+          onRefreshData={loadData}
+        />
+      </Suspense>
     );
   }
 
@@ -540,14 +554,18 @@ export default function App() {
         onClose={() => setCompletedOrder(null)}
       />
 
-      <AdminLoginModal
-        isOpen={isAdminLoginOpen}
-        onClose={() => setIsAdminLoginOpen(false)}
-        onLoginSuccess={(user) => {
-          setAdminUser(user);
-          setIsAdminPanelActive(true);
-        }}
-      />
+      {isAdminLoginOpen && (
+        <Suspense fallback={null}>
+          <AdminLoginModal
+            isOpen={isAdminLoginOpen}
+            onClose={() => setIsAdminLoginOpen(false)}
+            onLoginSuccess={(user) => {
+              setAdminUser(user);
+              setIsAdminPanelActive(true);
+            }}
+          />
+        </Suspense>
+      )}
 
     </div>
   );

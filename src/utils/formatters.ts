@@ -1,4 +1,4 @@
-import { CustomerInfo, OrderItem, StoreSettings } from '../types/store';
+import { CustomerInfo, OrderItem } from '../types/store';
 
 /**
  * Format numbers into Colombian Pesos (COP)

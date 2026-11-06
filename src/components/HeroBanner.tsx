@@ -20,7 +20,10 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
     settings?.heroSubtitle ||
     'Maquillaje y cuidado personal elegido con amor para resaltar lo linda que eres. Arma tu bolsita a tu ritmo y pide fácil por WhatsApp.';
   const badgeText = settings?.heroBadgeText || 'Hecho con amor para ti 💕';
-  const buttonText = settings?.heroButtonText || 'Explorar mis favoritos ✦';
+  let buttonText = settings?.heroButtonText || 'Explorar Catálogo ✦';
+  if (buttonText.includes('favoritos') || buttonText === 'Explorar Catálogo') {
+    buttonText = 'Explorar Catálogo ✦';
+  }
   const imageUrl =
     settings?.heroImageUrl ||
     'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1000&q=80';

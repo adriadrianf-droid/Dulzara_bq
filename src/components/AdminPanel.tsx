@@ -12,7 +12,6 @@ import {
   Truck,
   CheckCheck,
   Search,
-  ExternalLink,
   MessageCircle,
   Save,
   RotateCcw,
@@ -27,7 +26,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { Product, Order, OrderStatus, StoreSettings } from '../types/store';
-import { formatCOP, formatDateCO, createWhatsAppUrl } from '../utils/formatters';
+import { formatCOP, formatDateCO } from '../utils/formatters';
 import { storeService, DEFAULT_HERO_SETTINGS } from '../services/storeService';
 import { AdminUser } from '../services/authService';
 import { BeautyImage } from './BeautyImage';
@@ -193,7 +192,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   // Sync settings whenever updated settings arrive
   React.useEffect(() => {
-    setSettingsForm({ ...settings });
+    const s = { ...settings };
+    if (!s.heroButtonText || s.heroButtonText.includes('favoritos') || s.heroButtonText === 'Explorar Catálogo') {
+      s.heroButtonText = 'Explorar Catálogo ✦';
+    }
+    setSettingsForm(s);
   }, [settings]);
 
   // Derived real KPI metrics (strictly authentic, no fake data)
@@ -1124,7 +1127,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         onChange={(e) =>
                           setSettingsForm({ ...settingsForm, heroButtonText: e.target.value })
                         }
-                        placeholder="Explorar mis favoritos ✦"
+                        placeholder="Explorar Catálogo ✦"
                         className="w-full px-3.5 py-2 rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"
                       />
                     </div>

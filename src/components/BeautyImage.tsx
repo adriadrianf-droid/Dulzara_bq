@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Heart, Droplets, Eye, Smile, Package } from 'lucide-react';
+import { Sparkles, Heart, Droplets, Eye, Package } from 'lucide-react';
 
 interface BeautyImageProps {
   src: string;

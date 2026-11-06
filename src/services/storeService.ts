@@ -20,7 +20,7 @@ export const DEFAULT_HERO_SETTINGS = {
   heroTitle: 'Brilla a tu manera, nosotros ponemos la magia.',
   heroSubtitle: 'Maquillaje y cuidado personal elegido con amor para resaltar lo linda que eres. Arma tu bolsita a tu ritmo y pide fácil por WhatsApp.',
   heroBadgeText: 'Hecho con amor para ti 💕',
-  heroButtonText: 'Explorar mis favoritos ✦',
+  heroButtonText: 'Explorar Catálogo ✦',
   heroImageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1000&q=80',
 };
 
@@ -303,6 +303,9 @@ class StoreService {
       const storedSettings = localStorage.getItem('dulzara_settings_v1');
       if (storedSettings) {
         this.cachedSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(storedSettings) };
+        if (!this.cachedSettings.heroButtonText || this.cachedSettings.heroButtonText.includes('favoritos') || this.cachedSettings.heroButtonText === 'Explorar Catálogo') {
+          this.cachedSettings.heroButtonText = 'Explorar Catálogo ✦';
+        }
       }
     } catch {
       this.cachedSettings = { ...DEFAULT_SETTINGS };
