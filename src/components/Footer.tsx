@@ -30,11 +30,11 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Brand info */}
           <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-full bg-white border border-[#E8BFCB]/50 flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden shrink-0">
                 <img
-                  src="/assets/aistudio/dulzara_logo_cropped.png"
+                  src="/assets/aistudio/dulzara_logo_transparent.png"
                   alt="Dulzara Logo"
-                  className="w-full h-full object-contain scale-110 translate-x-[4%] translate-y-[4%] pointer-events-none"
+                  className="w-full h-full object-contain pointer-events-none"
                 />
               </div>
               <span className="text-2xl font-serif-brand font-semibold text-white tracking-wider block">

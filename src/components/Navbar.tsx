@@ -75,11 +75,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             className="text-left group cursor-pointer focus-visible:outline-none flex items-center gap-2 sm:gap-2.5"
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-[#E8BFCB] flex items-center justify-center overflow-hidden shrink-0 shadow-xs relative">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center overflow-hidden shrink-0 relative">
               <img
-                src="/assets/aistudio/dulzara_logo_cropped.png"
+                src="/assets/aistudio/dulzara_logo_transparent.png"
                 alt="Logo Dulzara"
-                className="w-full h-full object-contain scale-110 translate-x-[4%] translate-y-[4%] pointer-events-none"
+                className="w-full h-full object-contain pointer-events-none mix-blend-multiply"
               />
             </div>
             <div className="flex flex-col">

@@ -487,11 +487,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </button>
             <div className="h-4 w-px bg-[#E8BFCB]" />
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-white border border-[#E8BFCB] flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0">
                 <img
-                  src="/assets/aistudio/dulzara_logo_cropped.png"
+                  src="/assets/aistudio/dulzara_logo_transparent.png"
                   alt="Dulzara Logo"
-                  className="w-full h-full object-contain scale-110 translate-x-[4%] translate-y-[4%] pointer-events-none"
+                  className="w-full h-full object-contain pointer-events-none mix-blend-multiply"
                 />
               </div>
               <div>
