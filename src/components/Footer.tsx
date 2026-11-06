@@ -157,7 +157,7 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#E8BFCB]">
           <p>© 2026 DULZARA. Todos los derechos reservados. Colombia.</p>
           <div className="flex items-center gap-4">
-            <span>Precios en Pesos Colombianos (COP)</span>
+            <span>Precios en Pesos Colombianos</span>
             <span aria-hidden="true">·</span>
             <button
               onClick={onOpenAdmin}

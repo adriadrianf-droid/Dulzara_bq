@@ -700,7 +700,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         <th className="py-3.5 px-4">Cliente / Contacto</th>
                         <th className="py-3.5 px-4">Destino</th>
                         <th className="py-3.5 px-4">Productos</th>
-                        <th className="py-3.5 px-4 text-right">Total COP</th>
+                        <th className="py-3.5 px-4 text-right">Total</th>
                         <th className="py-3.5 px-4">Estado</th>
                         <th className="py-3.5 px-4 text-center">Acciones</th>
                       </tr>
@@ -828,7 +828,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <tr>
                       <th className="py-3.5 px-4">Producto</th>
                       <th className="py-3.5 px-4">Categoría</th>
-                      <th className="py-3.5 px-4 text-right">Precio COP</th>
+                      <th className="py-3.5 px-4 text-right">Precio</th>
                       <th className="py-3.5 px-4 text-center">Stock en Bodega</th>
                       <th className="py-3.5 px-4 text-center">Estado</th>
                       <th className="py-3.5 px-4 text-center">Acciones</th>
@@ -1183,7 +1183,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-[#382A30] mb-1">
-                      Monto mínimo para Envío Gratis (COP)
+                      Monto mínimo para Envío Gratis ($)
                     </label>
                     <input
                       type="number"
@@ -1203,7 +1203,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
                   <div>
                     <label className="block text-xs font-semibold text-[#382A30] mb-1">
-                      Costo de Envío Estándar (COP)
+                      Costo de Envío Estándar ($)
                     </label>
                     <input
                       type="number"
@@ -1555,7 +1555,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-semibold text-[#382A30] mb-1">
-                    Precio de Venta (COP) *
+                    Precio de Venta ($) *
                   </label>
                   <input
                     type="number"

@@ -51,8 +51,8 @@ export default function App() {
   // Navigation & Filtering
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc'>('featured');
-  const [onlyInStock, setOnlyInStock] = useState(false);
+  const [sortBy, setSortBy] = useState<'all' | 'price-asc' | 'price-desc'>('all');
+  const [onlyFeatured, setOnlyFeatured] = useState(false);
 
   // Modals & Panels state
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -183,17 +183,14 @@ export default function App() {
       product.name.toLowerCase().includes(cleanSearch) ||
       product.description.toLowerCase().includes(cleanSearch) ||
       product.category.toLowerCase().includes(cleanSearch);
-    const matchesStock = !onlyInStock || product.stock > 0;
+    const matchesFeatured = !onlyFeatured || Boolean(product.isFeatured);
 
-    return matchesCategory && matchesSearch && matchesStock;
+    return matchesCategory && matchesSearch && matchesFeatured;
   });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (sortBy === 'price-asc') return a.price - b.price;
     if (sortBy === 'price-desc') return b.price - a.price;
-    // Featured first
-    if (a.isFeatured && !b.isFeatured) return -1;
-    if (!a.isFeatured && b.isFeatured) return 1;
     return 0;
   });
 
@@ -356,16 +353,19 @@ export default function App() {
                 </h2>
               </div>
 
-              {/* Controls: Stock toggle & Sort selector */}
+              {/* Controls: Featured filter & Sort selector */}
               <div className="flex flex-wrap items-center gap-3 text-xs">
-                <label className="flex items-center gap-2 cursor-pointer select-none text-[#382A30]/80">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-[#382A30]/80 hover:text-[#382A30] transition-colors">
                   <input
                     type="checkbox"
-                    checked={onlyInStock}
-                    onChange={(e) => setOnlyInStock(e.target.checked)}
-                    className="rounded text-[#B9788B] focus:ring-[#B9788B]"
+                    checked={onlyFeatured}
+                    onChange={(e) => setOnlyFeatured(e.target.checked)}
+                    className="rounded text-[#B9788B] focus:ring-[#B9788B] border-[#E8BFCB]"
                   />
-                  <span>Sólo disponibles</span>
+                  <span className="flex items-center gap-1 font-medium">
+                    <span className="text-[#B9788B] text-xs" aria-hidden="true">✦</span>
+                    Sólo destacados
+                  </span>
                 </label>
 
                 <div className="flex items-center gap-1.5 border border-[#E8BFCB] rounded-xl px-2.5 py-1.5 bg-white">
@@ -373,13 +373,13 @@ export default function App() {
                   <select
                     value={sortBy}
                     onChange={(e) =>
-                      setSortBy(e.target.value as 'featured' | 'price-asc' | 'price-desc')
+                      setSortBy(e.target.value as 'all' | 'price-asc' | 'price-desc')
                     }
-                    className="bg-transparent focus:outline-none text-[#382A30]"
+                    className="bg-transparent focus:outline-none text-[#382A30] cursor-pointer"
                   >
-                    <option value="featured">Destacados</option>
-                    <option value="price-asc">Precio: Menor a Mayor</option>
-                    <option value="price-desc">Precio: Mayor a Menor</option>
+                    <option value="all">Todos</option>
+                    <option value="price-asc">Menor a mayor</option>
+                    <option value="price-desc">Mayor a menor</option>
                   </select>
                 </div>
               </div>
@@ -425,7 +425,8 @@ export default function App() {
                 onClick={() => {
                   setActiveCategory(null);
                   setSearchQuery('');
-                  setOnlyInStock(false);
+                  setOnlyFeatured(false);
+                  setSortBy('all');
                 }}
                 className="mt-2 px-5 py-2.5 bg-[#B9788B] text-white text-xs font-semibold rounded-full hover:bg-[#a6687a]"
               >

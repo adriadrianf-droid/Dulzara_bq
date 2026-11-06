@@ -1,16 +1,19 @@
 import { CustomerInfo, OrderItem } from '../types/store';
 
 /**
- * Format numbers into Colombian Pesos (COP)
- * Example: 45000 -> "$ 45.000 COP"
+ * Format numbers into currency format ($ XX.XXX)
+ * Example: 45000 -> "$ 45.000"
  */
-export function formatCOP(amount: number, includeCurrency = true): string {
+export function formatCOP(amount: number, _includeCurrency = false): string {
+  if (isNaN(amount) || amount === null || amount === undefined) {
+    return '$ 0';
+  }
   const formatted = new Intl.NumberFormat('es-CO', {
     style: 'decimal',
     maximumFractionDigits: 0,
   }).format(Math.round(amount));
 
-  return includeCurrency ? `$ ${formatted} COP` : `$ ${formatted}`;
+  return `$ ${formatted}`;
 }
 
 /**
