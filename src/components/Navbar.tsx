@@ -42,49 +42,49 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#FFFDF9]/95 backdrop-blur-md border-b border-[#E8BFCB]/40 transition-colors">
+    <header className="sticky top-0 z-40 bg-[#FFFDF9]/95 backdrop-blur-md border-b border-[#E8BFCB]/40 transition-colors w-full max-w-[100vw] overflow-x-hidden">
       {/* Slim Top Announcement Bar (<= 40px, dismissible) */}
       {showPromo && (
-        <div className="h-8 bg-[#382A30] text-[#FFFDF9] text-xs px-4 flex items-center justify-between font-sans">
-          <div className="flex-1 text-center truncate">
+        <div className="h-8 bg-[#382A30] text-[#FFFDF9] text-xs px-3 sm:px-4 flex items-center justify-between font-sans">
+          <div className="flex-1 text-center truncate text-[11px] sm:text-xs">
             <span>Envíos a toda Colombia</span>
-            <span className="mx-2 text-[#E8BFCB]" aria-hidden="true">·</span>
+            <span className="mx-1.5 sm:mx-2 text-[#E8BFCB]" aria-hidden="true">·</span>
             <span>Gratis desde {formatCOP(settings.freeShippingThreshold)}</span>
-            <span className="mx-2 text-[#E8BFCB]" aria-hidden="true">·</span>
+            <span className="mx-1.5 sm:mx-2 text-[#E8BFCB]" aria-hidden="true">·</span>
             <span className="hidden sm:inline">Pide directo por WhatsApp</span>
           </div>
           <button
             onClick={() => setShowPromo(false)}
             aria-label="Cerrar aviso"
-            className="text-[#E8BFCB] hover:text-white p-1 ml-2 transition-colors"
+            className="text-[#E8BFCB] hover:text-white p-1 ml-1 sm:ml-2 transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
-      {/* Main Top Bar Contract: Zone 1, Zone 2, Zone 3 */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-8">
+      {/* Main Top Bar: w-full max-w-[100vw] overflow-x-hidden px-3 */}
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-1.5 sm:gap-4 md:gap-8 overflow-x-hidden">
         
-        {/* Zone 1: Brand Wordmark with Centered Imagotipo and 4-pointed star */}
-        <div className="flex items-center gap-3">
+        {/* Zone 1: Brand Wordmark with Centered Imagotipo (bg-white, no transparency, exact centering) */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={() => {
               onNavigateCategory(null);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="text-left group cursor-pointer focus-visible:outline-none flex items-center gap-2.5"
+            className="text-left group cursor-pointer focus-visible:outline-none flex items-center gap-2 sm:gap-2.5"
           >
-            <div className="w-10 h-10 rounded-full bg-[#F7E5E9] border border-[#E8BFCB] flex items-center justify-center overflow-hidden shrink-0 shadow-xs relative p-0.5">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-[#E8BFCB] flex items-center justify-center overflow-hidden shrink-0 shadow-xs relative">
               <img
-                src="/assets/aistudio/dulzara_logo_transparent.png"
+                src="/assets/aistudio/dulzara_logo_cropped.png"
                 alt="Logo Dulzara"
-                className="w-full h-full object-contain pointer-events-none"
+                className="w-full h-full object-contain scale-110 translate-x-[4%] translate-y-[4%] pointer-events-none"
               />
             </div>
             <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl sm:text-2xl font-serif-brand font-semibold tracking-wider text-[#382A30] group-hover:text-[#B9788B] transition-colors whitespace-nowrap shrink-0">
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <span className="text-lg sm:text-2xl font-serif-brand font-semibold tracking-wider text-[#382A30] group-hover:text-[#B9788B] transition-colors whitespace-nowrap shrink-0">
                   DULZARA
                 </span>
                 <span className="text-[#B9788B] text-xs font-serif leading-none select-none" aria-hidden="true">✦</span>
@@ -148,20 +148,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </nav>
 
-        {/* Zone 3: Search, Admin Access, Shopping Bag */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Zone 3: Search, Admin Access, Shopping Bag, and Mobile Menu Pill */}
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Quick Search Toggle / Input */}
           <div className="relative flex items-center">
             {showSearchInput ? (
-              <div className="flex items-center bg-[#F7E5E9]/60 border border-[#E8BFCB] rounded-full px-3 py-1.5 w-44 sm:w-60 transition-all">
-                <Search className="w-4 h-4 text-[#B9788B] mr-2 shrink-0" />
+              <div className="flex items-center bg-[#F7E5E9]/60 border border-[#E8BFCB] rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 w-36 sm:w-60 transition-all">
+                <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B9788B] mr-1.5 shrink-0" />
                 <input
                   type="text"
-                  placeholder="Buscar producto..."
+                  placeholder="Buscar..."
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                   autoFocus
-                  className="w-full bg-transparent text-xs text-[#382A30] placeholder-[#382A30]/50 focus:outline-none"
+                  className="w-full bg-transparent text-xs text-[#382A30] placeholder-[#382A30]/50 focus:outline-none min-w-0"
                 />
                 <button
                   onClick={() => {
@@ -177,18 +177,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={() => setShowSearchInput(true)}
                 aria-label="Abrir buscador"
-                className="p-2 text-[#382A30]/80 hover:text-[#B9788B] rounded-full hover:bg-[#F7E5E9]/60 transition-colors"
+                className="p-1.5 sm:p-2 text-[#382A30]/80 hover:text-[#B9788B] rounded-full hover:bg-[#F7E5E9]/60 transition-colors"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             )}
           </div>
 
-          {/* Admin Protected Panel Entry Button */}
+          {/* Admin Protected Panel Entry Button (hidden on tiny mobile, accessible via mobile drawer) */}
           <button
             onClick={onOpenAdmin}
             title={isAdminLoggedIn ? 'Panel de Administración (Conectado)' : 'Acceso Administrador'}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-[#E8BFCB] text-[#382A30] hover:bg-[#F7E5E9] hover:border-[#B9788B] transition-colors"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-[#E8BFCB] text-[#382A30] hover:bg-[#F7E5E9] hover:border-[#B9788B] transition-colors"
           >
             <ShieldCheck className={`w-4 h-4 ${isAdminLoggedIn ? 'text-emerald-700' : 'text-[#B9788B]'}`} />
             <span className="hidden lg:inline">{isAdminLoggedIn ? 'Panel Admin' : 'Admin'}</span>
@@ -198,7 +198,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenCart}
             aria-label="Abrir bolsa de compras"
-            className="relative flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-[#B9788B] hover:bg-[#a6687a] text-white transition-all shadow-sm active:scale-95"
+            className="relative flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full bg-[#B9788B] hover:bg-[#a6687a] text-white transition-all shadow-sm active:scale-95 shrink-0"
           >
             <div className="relative">
               <ShoppingBag className="w-4 h-4" />
@@ -213,13 +213,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Menu Ingenious Pill Button (Solo Celular) */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Menú móvil"
-            className="md:hidden p-2 text-[#382A30] hover:text-[#B9788B]"
+            className="md:hidden bg-[#F7E5E9] text-[#382A30] border border-[#E8BFCB] rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium hover:bg-[#ebd3d9] transition-colors shrink-0 shadow-xs active:scale-95"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? (
+              <X className="w-3.5 h-3.5 text-[#B9788B]" />
+            ) : (
+              <Menu className="w-3.5 h-3.5 text-[#B9788B]" />
+            )}
+            <span>Menú</span>
           </button>
         </div>
       </div>

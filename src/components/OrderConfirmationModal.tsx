@@ -37,21 +37,21 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
       <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-[#E8BFCB] z-10 max-h-[92vh] flex flex-col">
         
         {/* Momento Mágico de Agradecimiento */}
-        <div className="relative p-6 sm:p-7 bg-gradient-to-b from-[#F7E5E9] via-[#F7E5E9]/50 to-[#FFFDF9] text-center border-b border-[#E8BFCB]/50 overflow-hidden">
+        <div className="relative pt-6 pb-7 px-6 bg-gradient-to-b from-[#F7E5E9] via-[#F7E5E9]/50 to-[#FFFDF9] flex flex-col items-center justify-center text-center border-b border-[#E8BFCB]/50 overflow-hidden">
           {/* Subtle 4-pointed sparkles */}
           <span aria-hidden="true" className="select-none absolute top-3 left-6 text-[#B9788B]/30 text-lg font-serif pointer-events-none">✦</span>
           <span aria-hidden="true" className="select-none absolute top-4 right-8 text-[#B9788B]/30 text-xl font-serif pointer-events-none">✦</span>
 
-          {/* Aesthetic Tender Visual Icon / Brand Star */}
-          <div className="relative mx-auto w-18 h-18 rounded-full bg-white border-2 border-[#E8BFCB] shadow-sm flex items-center justify-center overflow-hidden mb-3 p-2">
+          {/* Logo Oficial con Fondo Blanco Puro y Centrado Visual Exacto */}
+          <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-white border-2 border-[#E8BFCB] shadow-sm flex items-center justify-center overflow-hidden mb-3">
             <img
-              src="/assets/aistudio/dulzara_logo_transparent.png"
-              alt="Dulzara Magia"
-              className="w-full h-full object-contain pointer-events-none"
+              src="/assets/aistudio/dulzara_logo_cropped.png"
+              alt="Logo Dulzara"
+              className="w-full h-full object-contain scale-110 translate-x-[4%] translate-y-[4%] pointer-events-none"
             />
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-serif-brand font-semibold text-[#382A30] leading-snug">
+          <h2 className="text-2xl sm:text-3xl font-serif-brand font-semibold text-[#382A30] leading-snug px-2">
             ¡Gracias por brillar con Dulzara, hermosa! 💖
           </h2>
 
@@ -59,7 +59,7 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
             Amamos tenerte aquí.
           </p>
 
-          <div className="inline-flex items-center gap-2 mt-3 px-3 py-1 rounded-full bg-white/90 border border-[#E8BFCB] text-xs text-[#382A30]">
+          <div className="inline-flex items-center gap-2 mt-3 mb-3 px-3.5 py-1 rounded-full bg-white/95 border border-[#E8BFCB] text-xs text-[#382A30] shadow-xs">
             <span className="font-semibold text-[#B9788B]">Pedido #{order.id}</span>
             <span className="text-[#E8BFCB]">·</span>
             <span className="text-[#382A30]/75">Listo para WhatsApp</span>
