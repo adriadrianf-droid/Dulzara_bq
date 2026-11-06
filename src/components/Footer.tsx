@@ -29,9 +29,18 @@ export const Footer: React.FC<FooterProps> = ({
           
           {/* Brand info */}
           <div className="md:col-span-5 space-y-4">
-            <span className="text-2xl font-serif-brand font-semibold text-white tracking-wider block">
-              DULZARA
-            </span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-full bg-white/10 border border-[#E8BFCB]/30 flex items-center justify-center overflow-hidden shrink-0 p-1">
+                <img
+                  src="/assets/aistudio/dulzara_logo_transparent.png"
+                  alt="Dulzara Logo"
+                  className="w-full h-full object-contain pointer-events-none"
+                />
+              </div>
+              <span className="text-2xl font-serif-brand font-semibold text-white tracking-wider block">
+                DULZARA
+              </span>
+            </div>
             <p className="text-xs text-[#E8BFCB] leading-relaxed max-w-sm">
               Marca colombiana dedicada a la belleza, maquillaje y cuidado personal. Fórmulas botánicas y pigmentos sofisticados para realzar tu delicadeza con total autenticidad.
             </p>
@@ -66,56 +75,56 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   onClick={() => {
-                    onFilterCategory('skincare');
-                    window.scrollTo({ top: 400, behavior: 'smooth' });
+                    onFilterCategory('Rostro');
+                    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
                   className="hover:text-white transition-colors"
                 >
-                  Cuidado Facial (Skincare)
+                  Rostro
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => {
-                    onFilterCategory('maquillaje');
-                    window.scrollTo({ top: 400, behavior: 'smooth' });
+                    onFilterCategory('Ojos y Cejas');
+                    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
                   className="hover:text-white transition-colors"
                 >
-                  Maquillaje & Rostro
+                  Ojos y Cejas
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => {
-                    onFilterCategory('labios');
-                    window.scrollTo({ top: 400, behavior: 'smooth' });
+                    onFilterCategory('Labios');
+                    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
                   className="hover:text-white transition-colors"
                 >
-                  Labios & Brillos
+                  Labios
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => {
-                    onFilterCategory('ojos');
-                    window.scrollTo({ top: 400, behavior: 'smooth' });
+                    onFilterCategory('Skincare y Cuidado');
+                    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
                   className="hover:text-white transition-colors"
                 >
-                  Ojos & Sombras
+                  Skincare y Cuidado
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => {
-                    onFilterCategory('accesorios');
-                    window.scrollTo({ top: 400, behavior: 'smooth' });
+                    onFilterCategory('Kits y Accesorios');
+                    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
                   className="hover:text-white transition-colors"
                 >
-                  Brochas & Accesorios
+                  Kits y Accesorios
                 </button>
               </li>
             </ul>

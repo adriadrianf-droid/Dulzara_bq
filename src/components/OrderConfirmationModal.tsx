@@ -36,20 +36,34 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
       <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-[#E8BFCB] z-10 max-h-[92vh] flex flex-col">
         
-        {/* Success Header */}
-        <div className="p-6 bg-gradient-to-b from-[#F7E5E9] to-[#FFFDF9] text-center border-b border-[#E8BFCB]/50">
-          <div className="w-14 h-14 bg-emerald-100 text-emerald-800 rounded-full mx-auto flex items-center justify-center mb-3">
-            <CheckCircle2 className="w-8 h-8" />
+        {/* Momento Mágico de Agradecimiento */}
+        <div className="relative p-6 sm:p-7 bg-gradient-to-b from-[#F7E5E9] via-[#F7E5E9]/50 to-[#FFFDF9] text-center border-b border-[#E8BFCB]/50 overflow-hidden">
+          {/* Subtle 4-pointed sparkles */}
+          <span aria-hidden="true" className="select-none absolute top-3 left-6 text-[#B9788B]/30 text-lg font-serif pointer-events-none">✦</span>
+          <span aria-hidden="true" className="select-none absolute top-4 right-8 text-[#B9788B]/30 text-xl font-serif pointer-events-none">✦</span>
+
+          {/* Aesthetic Tender Visual Icon / Brand Star */}
+          <div className="relative mx-auto w-18 h-18 rounded-full bg-white border-2 border-[#E8BFCB] shadow-sm flex items-center justify-center overflow-hidden mb-3 p-2">
+            <img
+              src="/assets/aistudio/dulzara_logo_transparent.png"
+              alt="Dulzara Magia"
+              className="w-full h-full object-contain pointer-events-none"
+            />
           </div>
-          <span className="text-[11px] uppercase tracking-wider text-[#B9788B] font-semibold">
-            ¡Pedido Registrado con Éxito!
-          </span>
-          <h2 className="text-2xl font-serif-brand font-semibold text-[#382A30] mt-1">
-            Referencia: #{order.id}
+
+          <h2 className="text-2xl sm:text-3xl font-serif-brand font-semibold text-[#382A30] leading-snug">
+            ¡Gracias por brillar con Dulzara, hermosa! 💖
           </h2>
-          <p className="text-xs text-[#382A30]/75 mt-1 max-w-md mx-auto">
-            Hemos guardado tu pedido en nuestro sistema. Ahora sólo falta enviar el mensaje por WhatsApp para confirmarlo con nuestra asesora.
+
+          <p className="text-sm font-medium text-[#B9788B] mt-1 font-sans">
+            Amamos tenerte aquí.
           </p>
+
+          <div className="inline-flex items-center gap-2 mt-3 px-3 py-1 rounded-full bg-white/90 border border-[#E8BFCB] text-xs text-[#382A30]">
+            <span className="font-semibold text-[#B9788B]">Pedido #{order.id}</span>
+            <span className="text-[#E8BFCB]">·</span>
+            <span className="text-[#382A30]/75">Listo para WhatsApp</span>
+          </div>
         </div>
 
         {/* Content */}

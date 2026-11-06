@@ -21,16 +21,22 @@ export const BeautyImage: React.FC<BeautyImageProps> = ({
   // Pick an icon based on category
   const renderCategoryIcon = () => {
     switch (category) {
+      case 'Skincare y Cuidado':
       case 'skincare':
+      case 'cuidado-corporal':
         return <Droplets className="w-8 h-8 text-[#B9788B]/70" />;
+      case 'Labios':
       case 'labios':
         return <Heart className="w-8 h-8 text-[#B9788B]/70" />;
+      case 'Ojos y Cejas':
       case 'ojos':
         return <Eye className="w-8 h-8 text-[#B9788B]/70" />;
+      case 'Rostro':
       case 'maquillaje':
         return <Sparkles className="w-8 h-8 text-[#B9788B]/70" />;
-      case 'cuidado-corporal':
-        return <Smile className="w-8 h-8 text-[#B9788B]/70" />;
+      case 'Kits y Accesorios':
+      case 'accesorios':
+        return <Package className="w-8 h-8 text-[#B9788B]/70" />;
       default:
         return <Package className="w-8 h-8 text-[#B9788B]/70" />;
     }

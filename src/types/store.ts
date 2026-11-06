@@ -1,3 +1,18 @@
+export type ProductCategory =
+  | 'Rostro'
+  | 'Ojos y Cejas'
+  | 'Labios'
+  | 'Skincare y Cuidado'
+  | 'Kits y Accesorios';
+
+export const OFFICIAL_CATEGORIES: ProductCategory[] = [
+  'Rostro',
+  'Ojos y Cejas',
+  'Labios',
+  'Skincare y Cuidado',
+  'Kits y Accesorios',
+];
+
 export interface Product {
   id: string;
   name: string;
@@ -6,7 +21,7 @@ export interface Product {
   shortDescription: string;
   price: number; // in COP
   originalPrice?: number; // for showing discount
-  category: 'maquillaje' | 'skincare' | 'cuidado-corporal' | 'labios' | 'ojos' | 'accesorios';
+  category: ProductCategory | string;
   stock: number;
   imageUrl: string;
   isFeatured?: boolean;
@@ -64,4 +79,11 @@ export interface StoreSettings {
   instagramHandle: string;
   contactEmail: string;
   cityOrigin: string;
+  // Hero Customization
+  heroKicker?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroBadgeText?: string;
+  heroImageUrl?: string;
+  heroButtonText?: string;
 }

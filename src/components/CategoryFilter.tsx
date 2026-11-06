@@ -15,13 +15,20 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
 }) => {
   const categories = [
     { id: null, label: 'Todo el Catálogo', count: totalProductsCount },
-    { id: 'skincare', label: 'Cuidado Facial', count: categoryCounts['skincare'] || 0 },
-    { id: 'maquillaje', label: 'Maquillaje', count: categoryCounts['maquillaje'] || 0 },
-    { id: 'labios', label: 'Labios', count: categoryCounts['labios'] || 0 },
-    { id: 'ojos', label: 'Ojos', count: categoryCounts['ojos'] || 0 },
-    { id: 'cuidado-corporal', label: 'Corporal', count: categoryCounts['cuidado-corporal'] || 0 },
-    { id: 'accesorios', label: 'Accesorios', count: categoryCounts['accesorios'] || 0 },
+    { id: 'Rostro', label: 'Rostro', count: categoryCounts['Rostro'] || 0 },
+    { id: 'Ojos y Cejas', label: 'Ojos y Cejas', count: categoryCounts['Ojos y Cejas'] || 0 },
+    { id: 'Labios', label: 'Labios', count: categoryCounts['Labios'] || 0 },
+    { id: 'Skincare y Cuidado', label: 'Skincare y Cuidado', count: categoryCounts['Skincare y Cuidado'] || 0 },
+    { id: 'Kits y Accesorios', label: 'Kits y Accesorios', count: categoryCounts['Kits y Accesorios'] || 0 },
   ];
+
+  const handleCategorySelect = (categoryId: string | null) => {
+    onSelectCategory(categoryId);
+    const catalogEl = document.getElementById('catalogo');
+    if (catalogEl) {
+      catalogEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <div className="w-full overflow-x-auto scrollbar-none pb-2">
@@ -31,7 +38,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
           return (
             <button
               key={cat.id || 'all'}
-              onClick={() => onSelectCategory(cat.id)}
+              onClick={() => handleCategorySelect(cat.id)}
               className={`px-3.5 py-2 text-xs font-medium rounded-xl transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
                 isActive
                   ? 'bg-white text-[#382A30] shadow-sm font-semibold border border-[#E8BFCB]'

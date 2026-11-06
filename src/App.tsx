@@ -256,10 +256,12 @@ export default function App() {
         onNavigateCategory={(cat) => {
           setActiveCategory(cat);
           setSearchQuery('');
-          const catalogEl = document.getElementById('catalogo');
-          if (catalogEl) {
-            catalogEl.scrollIntoView({ behavior: 'smooth' });
-          }
+          setTimeout(() => {
+            const catalogEl = document.getElementById('catalogo');
+            if (catalogEl) {
+              catalogEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 30);
         }}
         activeCategory={activeCategory}
         onSearchChange={setSearchQuery}
@@ -272,9 +274,10 @@ export default function App() {
         
         {/* Editorial Hero Banner */}
         <HeroBanner
+          settings={settings}
           onExploreClick={() => {
             const el = document.getElementById('catalogo');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
           onOpenWhatsAppAdvice={handleOpenWhatsAppAdvice}
         />
@@ -346,7 +349,7 @@ export default function App() {
                 <button
                   onClick={() => {
                     const el = document.getElementById('catalogo');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
                   className="text-xs font-semibold text-[#B9788B] hover:text-[#a6687a] underline underline-offset-4 self-start sm:self-auto"
                 >
@@ -371,8 +374,8 @@ export default function App() {
           </section>
         )}
 
-        {/* Main Catalog Section */}
-        <section id="catalogo" className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Main Catalog Section with scroll-mt-24 for sticky header clearance */}
+        <section id="catalogo" className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 scroll-mt-24">
           
           {/* Section Header */}
           <div className="space-y-4">

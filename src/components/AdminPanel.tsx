@@ -22,11 +22,13 @@ import {
   Layers,
   Sparkles,
   Database,
-  Loader2
+  Loader2,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Product, Order, OrderStatus, StoreSettings } from '../types/store';
 import { formatCOP, formatDateCO, createWhatsAppUrl } from '../utils/formatters';
-import { storeService } from '../services/storeService';
+import { storeService, DEFAULT_HERO_SETTINGS } from '../services/storeService';
 import { AdminUser } from '../services/authService';
 import { BeautyImage } from './BeautyImage';
 
@@ -82,7 +84,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     description: '',
     price: 35000,
     originalPrice: undefined,
-    category: 'maquillaje',
+    category: 'Rostro',
     stock: 10,
     imageUrl: '',
     isFeatured: false,
@@ -112,6 +114,81 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setTimeout(() => {
       setAdminActionFeedback((current) => (current === msg ? null : current));
     }, 3500);
+  };
+
+  // Hero Image compression state
+  const [isCompressingHeroImage, setIsCompressingHeroImage] = useState(false);
+
+  const handleHeroFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showFeedback('Por favor selecciona un archivo de imagen válido.');
+      return;
+    }
+
+    setIsCompressingHeroImage(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          let compressedData = '';
+          try {
+            compressedData = canvas.toDataURL('image/webp', 0.82);
+          } catch {
+            compressedData = '';
+          }
+          if (!compressedData || !compressedData.startsWith('data:image/webp')) {
+            compressedData = canvas.toDataURL('image/jpeg', 0.82);
+          }
+          setSettingsForm((prev) => ({
+            ...prev,
+            heroImageUrl: compressedData,
+          }));
+          showFeedback('¡Imagen optimizada con éxito! Haz clic en "Guardar Configuración" para publicarla.');
+        }
+        setIsCompressingHeroImage(false);
+      };
+      img.onerror = () => {
+        setIsCompressingHeroImage(false);
+        showFeedback('No se pudo procesar la imagen seleccionada.');
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => {
+      setIsCompressingHeroImage(false);
+      showFeedback('No se pudo leer el archivo desde el dispositivo.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRestoreHeroDefaults = () => {
+    setSettingsForm((prev) => ({
+      ...prev,
+      ...DEFAULT_HERO_SETTINGS,
+    }));
+    showFeedback('Textos e imagen de la portada restaurados a los valores oficiales. Guarda para confirmar.');
   };
 
   // Sync settings whenever updated settings arrive
@@ -186,7 +263,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       description: '',
       price: 45000,
       originalPrice: undefined,
-      category: 'maquillaje',
+      category: 'Rostro',
       stock: 15,
       imageUrl: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80',
       isFeatured: false,
@@ -406,13 +483,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <span className="hidden sm:inline">Ver Tienda</span>
             </button>
             <div className="h-4 w-px bg-[#E8BFCB]" />
-            <div>
-              <span className="text-lg font-serif-brand font-semibold text-[#382A30]">
-                DULZARA
-              </span>
-              <span className="ml-2 text-xs text-[#B9788B] font-medium hidden sm:inline">
-                Panel Administrativo
-              </span>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#F7E5E9] border border-[#E8BFCB] flex items-center justify-center overflow-hidden shrink-0 p-0.5">
+                <img
+                  src="/assets/aistudio/dulzara_logo_transparent.png"
+                  alt="Dulzara Logo"
+                  className="w-full h-full object-contain pointer-events-none"
+                />
+              </div>
+              <div>
+                <span className="text-lg font-serif-brand font-semibold text-[#382A30]">
+                  DULZARA
+                </span>
+                <span className="ml-2 text-xs text-[#B9788B] font-medium hidden sm:inline">
+                  Panel Administrativo
+                </span>
+              </div>
             </div>
           </div>
 
@@ -722,12 +808,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   className="text-xs px-3 py-1.5 rounded-xl border border-[#E8BFCB] bg-white focus:outline-none text-[#382A30]"
                 >
                   <option value="todos">Todas las categorías</option>
-                  <option value="skincare">Cuidado Facial</option>
-                  <option value="maquillaje">Maquillaje</option>
-                  <option value="labios">Labios</option>
-                  <option value="ojos">Ojos</option>
-                  <option value="cuidado-corporal">Cuidado Corporal</option>
-                  <option value="accesorios">Accesorios</option>
+                  <option value="Rostro">Rostro</option>
+                  <option value="Ojos y Cejas">Ojos y Cejas</option>
+                  <option value="Labios">Labios</option>
+                  <option value="Skincare y Cuidado">Skincare y Cuidado</option>
+                  <option value="Kits y Accesorios">Kits y Accesorios</option>
                 </select>
               </div>
             </div>
@@ -845,7 +930,210 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         {/* TAB 3: CONFIGURACIÓN & FIREBASE INTEGRATION */}
         {activeTab === 'configuracion' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
+
+            {/* BLOQUE: Personalización de Portada (Hero) */}
+            <div className="lg:col-span-12 bg-white p-6 sm:p-7 rounded-3xl border border-[#E8BFCB]/70 shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F7E5E9] gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-full bg-[#F7E5E9] border border-[#E8BFCB] flex items-center justify-center text-[#B9788B]">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-serif-brand font-semibold text-[#382A30]">
+                      Personalización de Portada (Hero)
+                    </h3>
+                    <p className="text-xs text-[#382A30]/65">
+                      Cambia la fotografía principal, títulos, lema y textos de la tienda sin tocar código
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleRestoreHeroDefaults}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-full border border-[#E8BFCB] text-[#382A30] hover:bg-[#F7E5E9] transition-colors"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-[#B9788B]" />
+                    <span>Restaurar valores por defecto</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveSettings}
+                    disabled={isSavingSettings}
+                    className="py-1.5 px-4 bg-[#B9788B] hover:bg-[#a6687a] text-white text-xs font-semibold rounded-full transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>{isSavingSettings ? 'Guardando...' : 'Guardar Portada'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Grid with 2 columns: Image manager & Texts */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                {/* Column 1: Image Uploader & Live Preview */}
+                <div className="lg:col-span-5 space-y-3.5">
+                  <label className="block text-xs font-semibold text-[#382A30]">
+                    Fotografía o Banner Principal del Hero
+                  </label>
+
+                  {/* Visual Preview */}
+                  <div className="relative rounded-2xl overflow-hidden border-2 border-[#E8BFCB]/50 bg-[#F7E5E9]/30 h-52 sm:h-60 flex items-center justify-center group shadow-xs">
+                    {settingsForm.heroImageUrl ? (
+                      <img
+                        src={settingsForm.heroImageUrl}
+                        alt="Vista previa portada"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center p-4 text-[#382A30]/50 text-xs">
+                        <ImageIcon className="w-8 h-8 mx-auto mb-1 text-[#B9788B]/60" />
+                        <span>Sin imagen cargada</span>
+                      </div>
+                    )}
+                    
+                    {/* Badge preview overlay */}
+                    <div className="absolute bottom-2.5 left-2.5 bg-white/95 backdrop-blur-md rounded-full px-3 py-1 border border-[#E8BFCB] shadow-xs text-[11px] font-medium text-[#382A30] flex items-center gap-1">
+                      <span>{settingsForm.heroBadgeText || 'Hecho con amor para ti 💕'}</span>
+                    </div>
+
+                    {isCompressingHeroImage && (
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-xs flex flex-col items-center justify-center text-white text-xs font-medium gap-2">
+                        <Loader2 className="w-6 h-6 animate-spin text-[#F7E5E9]" />
+                        <span>Optimizando imagen con Canvas...</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upload Controls */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="hero-file-upload"
+                        className="flex-1 cursor-pointer py-2 px-3 bg-[#F7E5E9] hover:bg-[#ebd3d9] border border-[#E8BFCB] rounded-xl text-xs font-semibold text-[#382A30] text-center flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <Upload className="w-3.5 h-3.5 text-[#B9788B]" />
+                        <span>Subir desde computador o celular</span>
+                      </label>
+                      <input
+                        id="hero-file-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleHeroFileUpload}
+                        className="hidden"
+                      />
+                    </div>
+                    <p className="text-[10px] text-[#382A30]/65">
+                      ✓ Comprime automáticamente vía Canvas a WebP/JPEG ligero (Base64) para no saturar memoria.
+                    </p>
+
+                    <div className="pt-1">
+                      <label className="block text-[11px] font-medium text-[#382A30]/75 mb-1">
+                        O pegar URL pública de imagen:
+                      </label>
+                      <input
+                        type="url"
+                        value={settingsForm.heroImageUrl || ''}
+                        onChange={(e) =>
+                          setSettingsForm({ ...settingsForm, heroImageUrl: e.target.value })
+                        }
+                        placeholder="https://images.unsplash.com/..."
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 2: Text Editors */}
+                <div className="lg:col-span-7 space-y-3.5 text-xs">
+                  <div>
+                    <label className="block font-semibold text-[#382A30] mb-1">
+                      Etiqueta Superior (Kicker)
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.heroKicker || ''}
+                      onChange={(e) =>
+                        setSettingsForm({ ...settingsForm, heroKicker: e.target.value })
+                      }
+                      placeholder="✦ BIENVENIDA A TU LUGAR FELIZ"
+                      className="w-full px-3.5 py-2 rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"
+                    />
+                    <span className="text-[10px] text-[#382A30]/55 mt-0.5 block">
+                      Aparece en la píldora delicada sobre el título principal.
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-[#382A30] mb-1">
+                      Título Principal (H1)
+                    </label>
+                    <input
+                      type="text"
+                      value={settingsForm.heroTitle || ''}
+                      onChange={(e) =>
+                        setSettingsForm({ ...settingsForm, heroTitle: e.target.value })
+                      }
+                      placeholder="Brilla a tu manera, nosotros ponemos la magia."
+                      className="w-full px-3.5 py-2 rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none font-medium"
+                    />
+                    <span className="text-[10px] text-[#382A30]/55 mt-0.5 block">
+                      Las palabras 'ponemos la magia' reciben automáticamente acento de color (#B9788B) e itálica.
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-[#382A30] mb-1">
+                      Subtítulo Descriptivo
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={settingsForm.heroSubtitle || ''}
+                      onChange={(e) =>
+                        setSettingsForm({ ...settingsForm, heroSubtitle: e.target.value })
+                      }
+                      placeholder="Maquillaje y cuidado personal elegido con amor para resaltar lo linda que eres. Arma tu bolsita a tu ritmo y pide fácil por WhatsApp."
+                      className="w-full px-3.5 py-2 rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none resize-none leading-relaxed"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-[#382A30] mb-1">
+                        Etiqueta Flotante sobre la Imagen
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.heroBadgeText || ''}
+                        onChange={(e) =>
+                          setSettingsForm({ ...settingsForm, heroBadgeText: e.target.value })
+                        }
+                        placeholder="Hecho con amor para ti 💕"
+                        className="w-full px-3.5 py-2 rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-[#382A30] mb-1">
+                        Texto del Botón Principal (CTA)
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.heroButtonText || ''}
+                        onChange={(e) =>
+                          setSettingsForm({ ...settingsForm, heroButtonText: e.target.value })
+                        }
+                        placeholder="Explorar mis favoritos ✦"
+                        className="w-full px-3.5 py-2 rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
             {/* Store Settings Form */}
             <div className="lg:col-span-7 bg-white p-6 rounded-3xl border border-[#E8BFCB]/60 shadow-xs space-y-5">
               <div className="flex items-center justify-between border-b border-[#F7E5E9] pb-4">
@@ -1236,12 +1524,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     }
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8BFCB] bg-white focus:outline-none"
                   >
-                    <option value="skincare">Cuidado Facial (Skincare)</option>
-                    <option value="maquillaje">Maquillaje</option>
-                    <option value="labios">Labios</option>
-                    <option value="ojos">Ojos</option>
-                    <option value="cuidado-corporal">Cuidado Corporal</option>
-                    <option value="accesorios">Accesorios</option>
+                    <option value="Rostro">Rostro</option>
+                    <option value="Ojos y Cejas">Ojos y Cejas</option>
+                    <option value="Labios">Labios</option>
+                    <option value="Skincare y Cuidado">Skincare y Cuidado</option>
+                    <option value="Kits y Accesorios">Kits y Accesorios</option>
                   </select>
                 </div>
 

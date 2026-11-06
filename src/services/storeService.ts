@@ -15,6 +15,15 @@ import {
 import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Product, Order, CustomerInfo, StoreSettings, OrderStatus } from '../types/store';
 
+export const DEFAULT_HERO_SETTINGS = {
+  heroKicker: '✦ BIENVENIDA A TU LUGAR FELIZ',
+  heroTitle: 'Brilla a tu manera, nosotros ponemos la magia.',
+  heroSubtitle: 'Maquillaje y cuidado personal elegido con amor para resaltar lo linda que eres. Arma tu bolsita a tu ritmo y pide fácil por WhatsApp.',
+  heroBadgeText: 'Hecho con amor para ti 💕',
+  heroButtonText: 'Explorar mis favoritos ✦',
+  heroImageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1000&q=80',
+};
+
 export const DEFAULT_SETTINGS: StoreSettings = {
   brandName: 'DULZARA',
   whatsappNumber: '573124567890',
@@ -23,7 +32,31 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   instagramHandle: '@dulzara_bq',
   contactEmail: 'contacto@dulzara.com',
   cityOrigin: 'Barranquilla Atlántico, Colombia',
+  ...DEFAULT_HERO_SETTINGS,
 };
+
+export function normalizeCategory(cat: string): string {
+  switch (cat) {
+    case 'Rostro':
+    case 'maquillaje':
+      return 'Rostro';
+    case 'Ojos y Cejas':
+    case 'ojos':
+      return 'Ojos y Cejas';
+    case 'Labios':
+    case 'labios':
+      return 'Labios';
+    case 'Skincare y Cuidado':
+    case 'skincare':
+    case 'cuidado-corporal':
+      return 'Skincare y Cuidado';
+    case 'Kits y Accesorios':
+    case 'accesorios':
+      return 'Kits y Accesorios';
+    default:
+      return cat || 'Rostro';
+  }
+}
 
 export const INITIAL_PRODUCTS: Product[] = [
   {
@@ -34,7 +67,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     description: 'Nuestra fórmula estrella combina Niacinamida pura al 10% con extracto orgánico destilado de Rosa Damascena y Zinc PCA. Ayuda a calmar rojeces, suavizar la textura de la piel y devolver el brillo saludable desde la primera semana de uso.',
     price: 58000,
     originalPrice: 72000,
-    category: 'skincare',
+    category: 'Skincare y Cuidado',
     stock: 24,
     imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80',
     isFeatured: true,
@@ -57,7 +90,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     description: 'Un tono rosa empolvado sofisticado y versátil para cualquier ocasión. Su textura cremosa se desliza con facilidad y fija un color uniforme que no reseca los labios gracias a su infusión de manteca de karité y vitamina E.',
     price: 36000,
     originalPrice: 42000,
-    category: 'labios',
+    category: 'Labios',
     stock: 18,
     imageUrl: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=800&q=80',
     isFeatured: true,
@@ -80,7 +113,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     description: 'Inspirada en los atardeceres andinos, esta paleta ofrece una transición armoniosa desde tonos nude neutros hasta bronces cálidos y rosas satinados. Fórmula micro-pulverizada de alta adherencia y fácil difuminado.',
     price: 78000,
     originalPrice: 95000,
-    category: 'ojos',
+    category: 'Ojos y Cejas',
     stock: 14,
     imageUrl: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=800&q=80',
     isFeatured: true,
@@ -102,7 +135,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     shortDescription: 'Crema en gel sedosa que aporta hidratación profunda por 48 horas con acabado satinado.',
     description: 'Enriquecida con complejo de tripéptidos, centella asiática y escualano vegetal. Restaura la barrera cutánea sin tapar los poros, dejando un velo de frescura que prepara la piel perfectamente antes del maquillaje.',
     price: 64000,
-    category: 'skincare',
+    category: 'Skincare y Cuidado',
     stock: 22,
     imageUrl: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80',
     isFeatured: true,
@@ -124,7 +157,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     shortDescription: 'Rubor líquido modulable de larga duración con microesferas de luz natural.',
     description: 'Un rubor suave y sedoso que se funde como una segunda piel. Con una sola gota logras un aspecto saludable de mejillas sonrosadas y radiantes que dura todo el día sin resecar.',
     price: 34000,
-    category: 'maquillaje',
+    category: 'Rostro',
     stock: 30,
     imageUrl: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80',
     isFeatured: true,
@@ -147,7 +180,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     description: 'Destilado artesanal de pétalos frescos de rosa y agua floral de hamamelis sin alcohol. Ayuda a cerrar visiblemente los poros y prepara la piel para absorber mejor los sueros y tratamientos posteriores.',
     price: 32000,
     originalPrice: 38000,
-    category: 'skincare',
+    category: 'Skincare y Cuidado',
     stock: 19,
     imageUrl: 'https://images.unsplash.com/photo-1608248597359-002d287ee3b6?auto=format&fit=crop&w=800&q=80',
     isFeatured: false,
@@ -169,7 +202,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     shortDescription: 'Spray micro-difusor que sella el maquillaje por 24 horas protegiendo contra humedad y calor.',
     description: 'Resistente al sudor y al clima tropical. Elimina el aspecto empolvado, funde todos los productos aplicados y crea un escudo invisible que mantiene tu look impecable desde la mañana hasta la noche.',
     price: 42000,
-    category: 'maquillaje',
+    category: 'Rostro',
     stock: 25,
     imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
     isFeatured: false,
@@ -190,7 +223,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     shortDescription: 'Tratamiento labial jugoso que nutre en profundidad y da un brillo cristalino no pegajoso.',
     description: 'Formulado con 5 aceites botánicos preciosos (frambuesa, jojoba, argán, almendras dulces y rosa mosqueta). Proporciona un sutil toque de color baya traslúcido y un confort sedoso incomparable.',
     price: 29000,
-    category: 'labios',
+    category: 'Labios',
     stock: 35,
     imageUrl: 'https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&w=800&q=80',
     isFeatured: false,
@@ -211,7 +244,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     shortDescription: 'Crema corporal rica batida en frío con manteca de cacao y aroma relajante.',
     description: 'Una textura cremosa deliciosa que se derrite al contacto con la piel. Nutre intensamente codos, piernas y escote, mejorando la elasticidad y dejando una fragancia delicada que permanece por horas.',
     price: 49000,
-    category: 'cuidado-corporal',
+    category: 'Skincare y Cuidado',
     stock: 15,
     imageUrl: 'https://images.unsplash.com/photo-1608248597359-002d287ee3b6?auto=format&fit=crop&w=800&q=80',
     isFeatured: false,
@@ -233,7 +266,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     description: 'Incluye brochas esenciales para base, polvos, contorno, rubor, difuminado de ojos, cejas y labios. Vienen acompañadas de un neceser rígido acolchado de viaje en tono rosa empolvado.',
     price: 89000,
     originalPrice: 110000,
-    category: 'accesorios',
+    category: 'Kits y Accesorios',
     stock: 10,
     imageUrl: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=800&q=80',
     isFeatured: true,
@@ -281,7 +314,10 @@ class StoreService {
       if (storedProducts) {
         const parsed = JSON.parse(storedProducts);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          this.cachedProducts = parsed;
+          this.cachedProducts = parsed.map((p: Product) => ({
+            ...p,
+            category: normalizeCategory(p.category),
+          }));
         } else {
           this.cachedProducts = [...INITIAL_PRODUCTS];
         }
@@ -341,7 +377,11 @@ class StoreService {
           } else {
             const list: Product[] = [];
             snapshot.forEach((docSnap) => {
-              list.push(docSnap.data() as Product);
+              const item = docSnap.data() as Product;
+              list.push({
+                ...item,
+                category: normalizeCategory(item.category),
+              });
             });
             this.cachedProducts = list;
             this.saveProductsToLocalStorage();
