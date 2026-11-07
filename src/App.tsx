@@ -381,14 +381,14 @@ export default function App() {
                   </span>
                 </label>
 
-                <div className="flex items-center gap-1.5 border border-[#E8BFCB] rounded-xl px-2.5 py-1.5 bg-white">
-                  <ArrowUpDown className="w-3.5 h-3.5 text-[#B9788B]" />
+                <div className="relative inline-flex items-center border border-[#E8BFCB] rounded-xl bg-white hover:border-[#B9788B] transition-colors">
+                  <ArrowUpDown className="w-3.5 h-3.5 text-[#B9788B] pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 select-none" />
                   <select
                     value={sortBy}
                     onChange={(e) =>
                       setSortBy(e.target.value as 'all' | 'price-asc' | 'price-desc')
                     }
-                    className="bg-transparent focus:outline-none text-[#382A30] cursor-pointer"
+                    className="w-full bg-transparent focus:outline-none text-[#382A30] cursor-pointer pl-7 pr-2.5 py-1.5 text-xs rounded-xl"
                   >
                     <option value="all">Todos</option>
                     <option value="price-asc">Menor a mayor</option>
