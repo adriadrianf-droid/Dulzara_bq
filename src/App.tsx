@@ -249,12 +249,12 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#FFFDF9] text-[#382A30] font-sans flex flex-col selection:bg-[#E8BFCB] selection:text-[#382A30]">
       
-      {/* Toast feedback (Top-aligned, fully horizontal, responsive & elegant) */}
+      {/* Toast feedback (Top-aligned below header, fully horizontal & non-obstructive) */}
       {toastMessage && (
         <aside
           role="status"
           aria-live="polite"
-          className="fixed top-14 sm:top-20 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0 z-50 w-[92vw] max-w-md sm:w-auto sm:max-w-lg bg-[#FFFDF9]/98 backdrop-blur-md text-[#382A30] border border-[#E8BFCB] px-3.5 sm:px-4 py-2.5 rounded-full shadow-lg shadow-[#382A30]/8 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-3 duration-200"
+          className="fixed top-[104px] sm:top-28 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0 z-50 w-[92vw] max-w-md sm:w-auto sm:max-w-lg bg-[#FFFDF9]/98 backdrop-blur-md text-[#382A30] border border-[#E8BFCB] px-3.5 sm:px-4 py-2.5 rounded-full shadow-lg shadow-[#382A30]/8 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-3 duration-200"
         >
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="w-5 h-5 rounded-full bg-[#F7E5E9] text-[#B9788B] flex items-center justify-center shrink-0">
