@@ -241,10 +241,23 @@ export default function App() {
       
       {/* Toast feedback */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-[#382A30] text-white px-4 py-2.5 rounded-full text-xs font-medium shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-          <CheckCircle className="w-4 h-4 text-[#E8BFCB]" />
+        <aside
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 sm:bottom-auto sm:top-20 sm:left-auto sm:right-6 sm:translate-x-0 z-50 bg-[#FFFDF9]/95 backdrop-blur-md text-[#382A30] border border-[#E8BFCB] px-4 py-2.5 rounded-full text-xs font-medium shadow-xl flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-2 sm:slide-in-from-top-2 duration-300"
+        >
+          <span className="text-[#B9788B] text-sm animate-pulse font-serif" aria-hidden="true">✦</span>
           <span>{toastMessage}</span>
-        </div>
+          <button
+            onClick={() => {
+              setToastMessage(null);
+              setIsCartOpen(true);
+            }}
+            className="ml-1 text-[11px] font-bold text-[#B9788B] hover:text-[#382A30] underline underline-offset-2 transition-colors cursor-pointer"
+          >
+            Ver bolsa
+          </button>
+        </aside>
       )}
 
       {/* Top Navbar */}
