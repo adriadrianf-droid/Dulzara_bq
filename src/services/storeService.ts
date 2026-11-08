@@ -2,17 +2,12 @@ import {
   collection,
   doc,
   getDocs,
-  getDoc,
   setDoc,
   updateDoc,
   deleteDoc,
   onSnapshot,
-  runTransaction,
-  query,
-  orderBy,
-  serverTimestamp,
 } from 'firebase/firestore';
-import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { Product, Order, CustomerInfo, StoreSettings, OrderStatus } from '../types/store';
 
 export const DEFAULT_HERO_SETTINGS = {

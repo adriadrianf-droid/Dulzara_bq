@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle2, MessageCircle, Copy, Check, ArrowRight, Package } from 'lucide-react';
+import { MessageCircle, Copy, Check, ArrowRight, Package } from 'lucide-react';
 import { Order } from '../types/store';
 import { formatCOP, buildWhatsAppMessage } from '../utils/formatters';
 

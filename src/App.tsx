@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import {
   ArrowUpDown,
-  Filter,
-  CheckCircle,
   MessageCircle,
   Truck,
   ShieldCheck,
