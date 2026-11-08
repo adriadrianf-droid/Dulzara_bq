@@ -135,6 +135,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                 <BeautyImage
                   src={imageUrl}
                   alt="Dulzara Belleza y Cuidado Personal"
+                  priority={true}
                   className="w-full h-44 sm:h-52 md:h-[420px] object-cover transition-transform duration-700 ease-out group-hover:scale-102"
                 />
 
