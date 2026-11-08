@@ -221,18 +221,18 @@ export const Navbar: React.FC<NavbarProps> = ({
       )}
 
       {/* Main Top Bar */}
-      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-1.5 sm:gap-4 md:gap-8">
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-1 sm:gap-4 md:gap-8">
         
         {/* Zone 1: Brand Wordmark with Centered Imagotipo */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <button
             onClick={() => {
               onNavigateCategory(null);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="text-left group cursor-pointer focus-visible:outline-none flex items-center gap-2 sm:gap-2.5"
+            className="text-left group cursor-pointer focus-visible:outline-none flex items-center gap-1.5 sm:gap-2.5"
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center overflow-hidden shrink-0 relative">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center overflow-hidden shrink-0 relative">
               <img
                 src="/assets/aistudio/dulzara_logo_transparent.png"
                 alt="Logo Dulzara"
@@ -241,7 +241,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-1 sm:gap-1.5">
-                <span className="text-lg sm:text-2xl font-serif-brand font-semibold tracking-wider text-[#382A30] group-hover:text-[#B9788B] transition-colors whitespace-nowrap shrink-0">
+                <span className="text-base sm:text-2xl font-serif-brand font-semibold tracking-wider text-[#382A30] group-hover:text-[#B9788B] transition-colors whitespace-nowrap shrink-0">
                   DULZARA
                 </span>
                 <span className="text-[#B9788B] text-xs font-serif leading-none select-none" aria-hidden="true">✦</span>
@@ -306,17 +306,17 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Zone 3: Search, Admin Access, Shopping Bag, and Mobile Menu Pill */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
           
           {/* Predictive Search Container with Autocomplete Dropdown */}
           <div className="static sm:relative flex items-center" ref={searchContainerRef}>
             {showSearchInput ? (
-              <div className="flex items-center bg-[#F7E5E9]/70 border border-[#E8BFCB] focus-within:border-[#B9788B] rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 w-44 sm:w-64 md:w-72 transition-all shadow-xs">
-                <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B9788B] mr-1.5 shrink-0" />
+              <div className="flex items-center bg-[#F7E5E9]/70 border border-[#E8BFCB] focus-within:border-[#B9788B] rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 w-36 min-[380px]:w-44 min-[420px]:w-52 sm:w-64 md:w-72 transition-all shadow-xs">
+                <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B9788B] mr-1 sm:mr-1.5 shrink-0" />
                 <input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Buscar en catálogo..."
+                  placeholder="Buscar..."
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                   onFocus={() => setDropdownOpen(true)}
@@ -533,19 +533,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
 
-          {/* Mobile Menu Ingenious Pill Button (Solo Celular) */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Menú móvil"
-            className="md:hidden bg-[#F7E5E9] text-[#382A30] border border-[#E8BFCB] rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium hover:bg-[#ebd3d9] transition-colors shrink-0 shadow-xs active:scale-95"
-          >
-            {mobileMenuOpen ? (
-              <X className="w-3.5 h-3.5 text-[#B9788B]" />
-            ) : (
-              <Menu className="w-3.5 h-3.5 text-[#B9788B]" />
-            )}
-            <span>Menú</span>
-          </button>
+          {/* Mobile Menu Ingenious Pill Button (Solo Celular - se oculta mientras se busca para dar espacio cómodo) */}
+          {!showSearchInput && (
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Menú móvil"
+              className="md:hidden bg-[#F7E5E9] text-[#382A30] border border-[#E8BFCB] rounded-full px-2.5 sm:px-3 py-1.5 flex items-center gap-1 text-xs font-medium hover:bg-[#ebd3d9] transition-colors shrink-0 shadow-xs active:scale-95 animate-in fade-in duration-150"
+            >
+              {mobileMenuOpen ? (
+                <X className="w-3.5 h-3.5 text-[#B9788B]" />
+              ) : (
+                <Menu className="w-3.5 h-3.5 text-[#B9788B]" />
+              )}
+              <span>Menú</span>
+            </button>
+          )}
         </div>
       </div>
 
