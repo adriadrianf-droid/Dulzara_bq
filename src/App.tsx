@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import {
   ArrowUpDown,
   Filter,
@@ -6,13 +6,14 @@ import {
   MessageCircle,
   Truck,
   ShieldCheck,
-  Gift
+  Gift,
+  Sparkles
 } from 'lucide-react';
 
 import { Product, CartItem, Order, StoreSettings } from './types/store';
 import { storeService } from './services/storeService';
 import { authService, AdminUser } from './services/authService';
-import { formatCOP, createWhatsAppUrl } from './utils/formatters';
+import { formatCOP, createWhatsAppUrl, matchesSearchQuery } from './utils/formatters';
 
 import { Navbar } from './components/Navbar';
 import { HeroBanner } from './components/HeroBanner';
@@ -178,21 +179,43 @@ export default function App() {
     0
   );
 
-  // Category counts
-  const categoryCounts = products.reduce((acc, p) => {
-    acc[p.category] = (acc[p.category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  // Global search matches across all categories
+  const allSearchMatches = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    return products.filter((p) =>
+      matchesSearchQuery(p.name, searchQuery) ||
+      matchesSearchQuery(p.description || '', searchQuery) ||
+      matchesSearchQuery(p.shortDescription || '', searchQuery) ||
+      matchesSearchQuery(p.category || '', searchQuery)
+    );
+  }, [products, searchQuery]);
 
-  // Filtered & sorted catalog
+  // Breakdown of matching products by category
+  const matchesByCategory = useMemo(() => {
+    return allSearchMatches.reduce((acc, p) => {
+      acc[p.category] = (acc[p.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [allSearchMatches]);
+
+  // Category counts: show search result count per category when searching
+  const categoryCounts = useMemo(() => {
+    const list = searchQuery.trim() ? allSearchMatches : products;
+    return list.reduce((acc, p) => {
+      acc[p.category] = (acc[p.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [products, searchQuery, allSearchMatches]);
+
+  // Filtered & sorted catalog with accent, case, and plural tolerance
   const filteredProducts = products.filter((product) => {
     const matchesCategory = !activeCategory || product.category === activeCategory;
-    const cleanSearch = searchQuery.toLowerCase().trim();
     const matchesSearch =
-      !cleanSearch ||
-      product.name.toLowerCase().includes(cleanSearch) ||
-      product.description.toLowerCase().includes(cleanSearch) ||
-      product.category.toLowerCase().includes(cleanSearch);
+      !searchQuery.trim() ||
+      matchesSearchQuery(product.name, searchQuery) ||
+      matchesSearchQuery(product.description || '', searchQuery) ||
+      matchesSearchQuery(product.shortDescription || '', searchQuery) ||
+      matchesSearchQuery(product.category || '', searchQuery);
     const matchesFeatured = !onlyFeatured || Boolean(product.isFeatured);
 
     return matchesCategory && matchesSearch && matchesFeatured;
@@ -210,6 +233,21 @@ export default function App() {
     setIsCheckoutOpen(false);
     setCompletedOrder({ order, whatsappUrl });
     loadData(); // updates local stock in state
+  };
+
+  // Search submission: searches globally across the whole store by resetting activeCategory to null
+  const handleSearchSubmit = (query: string) => {
+    // Automatically search entire catalog so products in any category are shown immediately
+    setActiveCategory(null);
+    setSearchQuery(query);
+    setTimeout(() => {
+      const el = document.getElementById('catalogo') || document.getElementById('grid-productos');
+      if (el) {
+        const yOffset = -75; // subtle offset so header doesn't cover "Resultados para la búsqueda..."
+        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+      }
+    }, 40);
   };
 
   // WhatsApp general consultation
@@ -303,6 +341,9 @@ export default function App() {
         onSearchChange={setSearchQuery}
         searchQuery={searchQuery}
         settings={settings}
+        products={products}
+        onSelectProduct={setSelectedProduct}
+        onSearchSubmit={handleSearchSubmit}
       />
 
       {/* Main Storefront Area */}
@@ -418,49 +459,137 @@ export default function App() {
             <CategoryFilter
               activeCategory={activeCategory}
               onSelectCategory={setActiveCategory}
-              totalProductsCount={products.length}
+              totalProductsCount={searchQuery.trim() ? allSearchMatches.length : products.length}
               categoryCounts={categoryCounts}
             />
 
-            {/* Search query feedback if any */}
+            {/* Search query feedback with cross-category awareness */}
             {searchQuery && (
-              <div className="flex items-center justify-between p-3 bg-[#F7E5E9]/50 rounded-xl text-xs text-[#382A30]">
-                <span>
-                  Resultados para la búsqueda: <strong>"{searchQuery}"</strong> ({sortedProducts.length} productos)
-                </span>
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="text-[#B9788B] font-semibold hover:underline"
-                >
-                  Limpiar búsqueda
-                </button>
+              <div className="p-3.5 bg-[#F7E5E9]/60 border border-[#E8BFCB] rounded-2xl text-xs text-[#382A30] space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#B9788B] shrink-0" />
+                    <span>
+                      Resultados para <strong>"{searchQuery}"</strong>:{' '}
+                      {activeCategory ? (
+                        <>
+                          <strong>{sortedProducts.length}</strong> en <em>{activeCategory}</em>{' '}
+                          {allSearchMatches.length !== sortedProducts.length && (
+                            <span className="text-[#382A30]/70">
+                              (de <strong>{allSearchMatches.length}</strong> en toda la tienda)
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <strong>{sortedProducts.length} productos en toda la tienda</strong>
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {activeCategory && allSearchMatches.length > sortedProducts.length && (
+                      <button
+                        onClick={() => setActiveCategory(null)}
+                        className="px-2.5 py-1 bg-white hover:bg-[#F7E5E9] text-[#B9788B] font-semibold rounded-lg border border-[#E8BFCB] transition-colors cursor-pointer text-[11px]"
+                      >
+                        Ver todos ({allSearchMatches.length})
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        setActiveCategory(null);
+                      }}
+                      className="text-[#B9788B] font-semibold hover:underline cursor-pointer text-[11px]"
+                    >
+                      Limpiar búsqueda
+                    </button>
+                  </div>
+                </div>
+
+                {/* Proactive alert: if current category has 0 matches but other categories do */}
+                {activeCategory && sortedProducts.length === 0 && allSearchMatches.length > 0 && (
+                  <div className="pt-2 border-t border-[#E8BFCB]/50 flex flex-wrap items-center gap-2 text-[11px]">
+                    <span className="text-[#382A30]/80">
+                      💡 No hay coincidencias en <strong>{activeCategory}</strong>, pero sí encontramos en:
+                    </span>
+                    {Object.entries(matchesByCategory).map(([cat, count]) => (
+                      <button
+                        key={cat}
+                        onClick={() => setActiveCategory(cat)}
+                        className="px-2.5 py-0.5 bg-[#B9788B] text-white rounded-full font-medium hover:bg-[#a6687a] transition-all cursor-pointer shadow-2xs"
+                      >
+                        {cat} ({count})
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
 
           {/* Catalog Grid */}
           {sortedProducts.length === 0 ? (
-            <div className="py-20 text-center space-y-3 bg-white rounded-3xl border border-[#E8BFCB]/40 p-8">
+            <div className="py-14 text-center space-y-4 bg-white rounded-3xl border border-[#E8BFCB]/60 p-8 shadow-xs">
               <div className="w-16 h-16 rounded-full bg-[#F7E5E9] flex items-center justify-center mx-auto text-[#B9788B]">
-                <Filter className="w-8 h-8" />
+                <Sparkles className="w-8 h-8" />
               </div>
-              <h3 className="text-lg font-serif-brand font-semibold text-[#382A30]">
-                No encontramos productos con ese criterio
-              </h3>
-              <p className="text-xs text-[#382A30]/60 max-w-sm mx-auto">
-                Prueba seleccionando otra categoría o limpiando la barra de búsqueda.
-              </p>
-              <button
-                onClick={() => {
-                  setActiveCategory(null);
-                  setSearchQuery('');
-                  setOnlyFeatured(false);
-                  setSortBy('all');
-                }}
-                className="mt-2 px-5 py-2.5 bg-[#B9788B] text-white text-xs font-semibold rounded-full hover:bg-[#a6687a]"
-              >
-                Ver todo el catálogo
-              </button>
+
+              {activeCategory && allSearchMatches.length > 0 ? (
+                <div className="space-y-3 max-w-md mx-auto">
+                  <h3 className="text-lg font-serif-brand font-semibold text-[#382A30]">
+                    ¿Buscabas "{searchQuery}" en otra sección?
+                  </h3>
+                  <p className="text-xs text-[#382A30]/70">
+                    No encontramos "{searchQuery}" dentro de <strong>{activeCategory}</strong>, pero sí tenemos <strong>{allSearchMatches.length} {allSearchMatches.length === 1 ? 'producto' : 'productos'}</strong> disponibles en otras secciones:
+                  </p>
+                  
+                  {/* Category jump buttons */}
+                  <div className="flex flex-wrap justify-center gap-2 pt-1">
+                    {Object.entries(matchesByCategory).map(([cat, count]) => (
+                      <button
+                        key={cat}
+                        onClick={() => setActiveCategory(cat)}
+                        className="px-3.5 py-1.5 bg-[#F7E5E9] hover:bg-[#E8BFCB] text-[#382A30] text-xs font-semibold rounded-xl border border-[#E8BFCB] transition-colors cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>{cat}</span>
+                        <span className="bg-[#B9788B] text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                          {count}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="pt-3">
+                    <button
+                      onClick={() => setActiveCategory(null)}
+                      className="px-5 py-2.5 bg-[#B9788B] text-white text-xs font-semibold rounded-full hover:bg-[#a6687a] transition-all shadow-xs cursor-pointer"
+                    >
+                      Ver todos los {allSearchMatches.length} productos
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 max-w-sm mx-auto">
+                  <h3 className="text-lg font-serif-brand font-semibold text-[#382A30]">
+                    No encontramos productos con ese criterio
+                  </h3>
+                  <p className="text-xs text-[#382A30]/60">
+                    Prueba seleccionando otra categoría o limpiando la barra de búsqueda.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setActiveCategory(null);
+                      setSearchQuery('');
+                      setOnlyFeatured(false);
+                      setSortBy('all');
+                    }}
+                    className="mt-2 px-5 py-2.5 bg-[#B9788B] text-white text-xs font-semibold rounded-full hover:bg-[#a6687a] cursor-pointer"
+                  >
+                    Ver todo el catálogo
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div id="grid-productos" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">

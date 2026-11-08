@@ -136,3 +136,63 @@ export function formatDateCO(dateString: string): string {
     return dateString;
   }
 }
+
+/**
+ * Normalizes text by removing diacritical marks (tildes), casing, and excess whitespace.
+ * Example: "Tónico Facial" -> "tonico facial"
+ */
+export function normalizeSearchText(text: string): string {
+  if (!text) return '';
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Spanish word variants for singular and plural matching.
+ * Handles "labiales" <-> "labial", "tonicos" <-> "tonico", "brochas" <-> "brocha".
+ */
+export function getSpanishWordVariants(word: string): string[] {
+  const normalized = normalizeSearchText(word);
+  if (normalized.length <= 2) return [normalized];
+
+  const variants = new Set<string>([normalized]);
+
+  // Plural ending in "es" (e.g. labiales -> labial, exfoliantes -> exfoliante)
+  if (normalized.endsWith('es')) {
+    variants.add(normalized.slice(0, -2));
+    variants.add(normalized.slice(0, -1));
+  }
+  // Plural ending in "s" (e.g. tonicos -> tonico, brochas -> brocha)
+  else if (normalized.endsWith('s')) {
+    variants.add(normalized.slice(0, -1));
+  } else {
+    // Singular to plural candidates
+    variants.add(`${normalized}s`);
+    variants.add(`${normalized}es`);
+  }
+
+  return Array.from(variants);
+}
+
+/**
+ * Checks if target text matches the search query, ignoring accents, casing,
+ * and matching singular or plural variants.
+ */
+export function matchesSearchQuery(targetText: string, query: string): boolean {
+  const normQuery = normalizeSearchText(query);
+  if (!normQuery) return true;
+
+  const normTarget = normalizeSearchText(targetText);
+  if (normTarget.includes(normQuery)) return true;
+
+  const queryWords = normQuery.split(/\s+/).filter(Boolean);
+  if (queryWords.length === 0) return true;
+
+  return queryWords.every((word) => {
+    const variants = getSpanishWordVariants(word);
+    return variants.some((v) => normTarget.includes(v));
+  });
+}
