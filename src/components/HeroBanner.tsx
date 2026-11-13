@@ -126,17 +126,17 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </div>
           </div>
 
-          {/* Right Visual Column — stays side-by-side on all computers (md+) and adapts aspect ratio */}
-          <div className="md:col-span-5 flex items-center justify-center md:justify-end">
-            <div className="relative w-full max-w-[340px] sm:max-w-[380px] md:max-w-none">
+          {/* Right Visual Column — exact original compact size on mobile, side-by-side adaptive on computers (md+) */}
+          <div className="md:col-span-5">
+            <div className="relative mx-auto max-w-md md:max-w-none">
               
               {/* Main Visual Frame */}
-              <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-md sm:shadow-lg border-2 border-white ring-1 ring-[#E8BFCB]/40 bg-white group aspect-square md:aspect-[4/3.9] lg:aspect-auto lg:h-[390px] xl:h-[420px]">
+              <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-md sm:shadow-lg border-2 border-white ring-1 ring-[#E8BFCB]/40 bg-white group">
                 <BeautyImage
                   src={imageUrl}
                   alt="Dulzara Belleza y Cuidado Personal"
                   priority={true}
-                  className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-102"
+                  className="w-full h-48 sm:h-60 md:h-auto md:aspect-[4/3.9] lg:aspect-auto lg:h-[390px] xl:h-[410px] object-cover object-center transition-transform duration-700 ease-out group-hover:scale-102"
                 />
 
                 {/* Única etiqueta flotante delicada y limpia en una esquina con icono de corazón */}
