@@ -113,7 +113,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   };
 
   const handleShadeAdvisoryWhatsApp = () => {
-    const msg = `¡Hola Dulzara! 💕 Quiero comprar el producto *${product.name}* pero tengo dudas sobre cuál tono elegir, ¿me podrían asesorar?`;
+    const msg = `¡Hola Dulzara! Quiero comprar el producto *${product.name}* pero tengo dudas sobre cuál tono elegir, ¿me podrían asesorar?`;
     window.open(createWhatsAppUrl(whatsappNumber, msg), '_blank');
   };
 
@@ -335,13 +335,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   </div>
 
                   {/* Lifesaver Advisory Link */}
-                  <div className="pt-1 border-t border-[#F7E5E9]">
+                  <div className="pt-3 border-t border-[#E8BFCB]/35 flex items-center justify-center">
                     <button
                       type="button"
                       onClick={handleShadeAdvisoryWhatsApp}
-                      className="text-xs font-medium text-[#B9788B] hover:text-[#382A30] transition-colors inline-flex items-center gap-1.5 group cursor-pointer"
+                      className="text-xs font-medium text-[#B9788B] hover:text-[#382A30] transition-colors inline-flex items-center justify-center gap-1.5 group cursor-pointer text-center leading-snug"
                     >
-                      <MessageCircle className="w-3.5 h-3.5 text-[#25D366] shrink-0 group-hover:scale-110 transition-transform" />
+                      <MessageCircle className="w-3.5 h-3.5 text-[#25D366] shrink-0 translate-y-[0.5px] group-hover:scale-110 transition-transform" />
                       <span className="underline decoration-[#E8BFCB] underline-offset-4 group-hover:decoration-[#B9788B]">
                         ¿Dudas con tu tono ideal? Te asesoramos por WhatsApp 💕
                       </span>
