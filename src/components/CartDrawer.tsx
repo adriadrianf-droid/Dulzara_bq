@@ -1,15 +1,16 @@
 import React from 'react';
 import { X, Trash2, ArrowRight, ShoppingBag, Truck } from 'lucide-react';
 import { CartItem } from '../types/store';
-import { formatCOP } from '../utils/formatters';
+import { formatCOP, getCartItemKey, getVariantLabel } from '../utils/formatters';
 import { BeautyImage } from './BeautyImage';
+import { SwatchCircle } from './SwatchCircle';
 
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemoveItem: (productId: string) => void;
+  onUpdateQuantity: (cartItemKey: string, quantity: number) => void;
+  onRemoveItem: (cartItemKey: string) => void;
   onProceedToCheckout: () => void;
   freeShippingThreshold: number;
 }
@@ -111,79 +112,109 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </button>
               </div>
             ) : (
-              items.map((item) => (
-                <div
-                  key={item.product.id}
-                  className="flex gap-4 p-3 rounded-2xl bg-[#FFFDF9] border border-[#F7E5E9] hover:border-[#E8BFCB] transition-colors"
-                >
-                  {/* Thumbnail */}
-                  <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-[#F7E5E9]/30">
-                    <BeautyImage
-                      src={item.product.imageUrl}
-                      alt={item.product.name}
-                      category={item.product.category}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+              items.map((item) => {
+                const itemKey = getCartItemKey(item.product.id, item.selectedShade?.id);
+                const matchingShade =
+                  item.selectedShade && item.product.shades
+                    ? item.product.shades.find((s) => s.id === item.selectedShade?.id)
+                    : undefined;
+                const maxStock = matchingShade
+                  ? matchingShade.stock
+                  : item.product.stock;
+                const itemImageUrl =
+                  matchingShade?.imageUrl?.trim()
+                    ? matchingShade.imageUrl
+                    : item.product.imageUrl;
 
-                  {/* Details */}
-                  <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-xs font-semibold text-[#382A30] line-clamp-2">
-                          {item.product.name}
-                        </h4>
-                        <button
-                          onClick={() => onRemoveItem(item.product.id)}
-                          aria-label={`Eliminar ${item.product.name}`}
-                          className="text-[#382A30]/40 hover:text-red-700 p-1 transition-colors"
-                          title="Eliminar de la bolsa"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                      <span className="text-[11px] uppercase tracking-wider text-[#B9788B]">
-                        {item.product.category}
-                      </span>
+                return (
+                  <div
+                    key={itemKey}
+                    className="flex gap-4 p-3 rounded-2xl bg-[#FFFDF9] border border-[#F7E5E9] hover:border-[#E8BFCB] transition-colors"
+                  >
+                    {/* Thumbnail */}
+                    <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-[#F7E5E9]/30">
+                      <BeautyImage
+                        src={itemImageUrl}
+                        alt={item.product.name}
+                        category={item.product.category}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
 
-                    <div className="flex items-center justify-between pt-2">
-                      {/* Quantity Stepper */}
-                      <div className="flex items-center border border-[#E8BFCB] rounded-lg bg-white overflow-hidden">
-                        <button
-                          onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
-                          className="px-2 py-0.5 text-xs text-[#382A30] hover:bg-[#F7E5E9] transition-colors"
-                          aria-label="Disminuir cantidad"
-                        >
-                          -
-                        </button>
-                        <span className="px-2.5 py-0.5 text-xs font-semibold tabular-nums min-w-6 text-center">
-                          {item.quantity}
+                    {/* Details */}
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="text-xs font-semibold text-[#382A30] line-clamp-2">
+                            {item.product.name}
+                          </h4>
+                          <button
+                            onClick={() => onRemoveItem(itemKey)}
+                            aria-label={`Eliminar ${item.product.name}`}
+                            className="text-[#382A30]/40 hover:text-red-700 p-1 transition-colors"
+                            title="Eliminar de la bolsa"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <span className="text-[11px] uppercase tracking-wider text-[#B9788B]">
+                          {item.product.category}
                         </span>
-                        <button
-                          onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
-                          disabled={item.quantity >= item.product.stock}
-                          className="px-2 py-0.5 text-xs text-[#382A30] hover:bg-[#F7E5E9] disabled:opacity-30 transition-colors"
-                          aria-label="Aumentar cantidad"
-                        >
-                          +
-                        </button>
-                      </div>
 
-                      <div className="text-right">
-                        <span className="text-xs font-bold text-[#382A30] tabular-nums">
-                          {formatCOP(item.product.price * item.quantity)}
-                        </span>
-                        {item.quantity > 1 && (
-                          <span className="block text-[10px] text-[#382A30]/50 tabular-nums">
-                            {formatCOP(item.product.price)} c/u
-                          </span>
+                        {/* Selected Shade Pill */}
+                        {item.selectedShade && (
+                          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#382A30]/85 bg-[#F7E5E9]/70 px-2 py-0.5 rounded-full w-fit border border-[#E8BFCB]/50">
+                            <SwatchCircle
+                              colorHex={item.selectedShade.colorHex}
+                              finish={item.selectedShade.finish}
+                              name={item.selectedShade.name}
+                              size="xs"
+                            />
+                            <span className="font-medium">
+                              {getVariantLabel(item.product.variantType)}: {item.selectedShade.name}
+                            </span>
+                          </div>
                         )}
                       </div>
+
+                      <div className="flex items-center justify-between pt-2">
+                        {/* Quantity Stepper */}
+                        <div className="flex items-center border border-[#E8BFCB] rounded-lg bg-white overflow-hidden">
+                          <button
+                            onClick={() => onUpdateQuantity(itemKey, item.quantity - 1)}
+                            className="px-2 py-0.5 text-xs text-[#382A30] hover:bg-[#F7E5E9] transition-colors"
+                            aria-label="Disminuir cantidad"
+                          >
+                            -
+                          </button>
+                          <span className="px-2.5 py-0.5 text-xs font-semibold tabular-nums min-w-6 text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => onUpdateQuantity(itemKey, item.quantity + 1)}
+                            disabled={item.quantity >= maxStock}
+                            className="px-2 py-0.5 text-xs text-[#382A30] hover:bg-[#F7E5E9] disabled:opacity-30 transition-colors"
+                            aria-label="Aumentar cantidad"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="text-xs font-bold text-[#382A30] tabular-nums">
+                            {formatCOP(item.product.price * item.quantity)}
+                          </span>
+                          {item.quantity > 1 && (
+                            <span className="block text-[10px] text-[#382A30]/50 tabular-nums">
+                              {formatCOP(item.product.price)} c/u
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 

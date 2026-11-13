@@ -8,7 +8,25 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Product, Order, CustomerInfo, StoreSettings, OrderStatus } from '../types/store';
+import {
+  Product,
+  Order,
+  CustomerInfo,
+  StoreSettings,
+  OrderStatus,
+  SelectedShade,
+  ProductShade,
+} from '../types/store';
+
+export function computeProductStock(
+  shades?: ProductShade[],
+  fallbackStock?: number
+): number {
+  if (Array.isArray(shades) && shades.length > 0) {
+    return shades.reduce((sum, s) => sum + Math.max(0, Number(s.stock) || 0), 0);
+  }
+  return Math.max(0, Number(fallbackStock) || 0);
+}
 
 export const DEFAULT_HERO_SETTINGS = {
   heroKicker: '✦ BIENVENIDA A TU LUGAR FELIZ',
@@ -58,7 +76,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 'prod-001',
     name: 'Suero Iluminador Niacinamida 10% & Rosa Damascena',
     slug: 'suero-iluminador-niacinamida-rosa',
-    shortDescription: 'Unifica el tono, minimiza poros y aporta luminosidad natural sin sensación grasa.',
+    shortDescription: 'Unifica el tono, minimiza poros y da brillo natural.',
     description: 'Nuestra fórmula estrella combina Niacinamida pura al 10% con extracto orgánico destilado de Rosa Damascena y Zinc PCA. Ayuda a calmar rojeces, suavizar la textura de la piel y devolver el brillo saludable desde la primera semana de uso.',
     price: 58000,
     originalPrice: 72000,
@@ -81,7 +99,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 'prod-002',
     name: 'Labial Velvet Matte "Rosa Salvaje"',
     slug: 'labial-velvet-matte-rosa-salvaje',
-    shortDescription: 'Acabado mate aterciopelado de larga duración con manteca de karité hidratante.',
+    shortDescription: 'Acabado mate aterciopelado con karité hidratante.',
     description: 'Un tono rosa empolvado sofisticado y versátil para cualquier ocasión. Su textura cremosa se desliza con facilidad y fija un color uniforme que no reseca los labios gracias a su infusión de manteca de karité y vitamina E.',
     price: 36000,
     originalPrice: 42000,
@@ -104,7 +122,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 'prod-003',
     name: 'Paleta de Sombras "Dulzara Rose Gold" (12 Tonos)',
     slug: 'paleta-sombras-dulzara-rose-gold',
-    shortDescription: '12 sombras pigmentadas entre mates sedosos, satinados perla y destellos rosa metálico.',
+    shortDescription: '12 sombras entre mates sedosos y destellos rosa.',
     description: 'Inspirada en los atardeceres andinos, esta paleta ofrece una transición armoniosa desde tonos nude neutros hasta bronces cálidos y rosas satinados. Fórmula micro-pulverizada de alta adherencia y fácil difuminado.',
     price: 78000,
     originalPrice: 95000,
@@ -127,7 +145,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 'prod-004',
     name: 'Crema Hidratante Facial "Hydra Glow" con Péptidos',
     slug: 'crema-hidratante-facial-hydra-glow',
-    shortDescription: 'Crema en gel sedosa que aporta hidratación profunda por 48 horas con acabado satinado.',
+    shortDescription: 'Gel sedoso con hidratación profunda por 48 horas.',
     description: 'Enriquecida con complejo de tripéptidos, centella asiática y escualano vegetal. Restaura la barrera cutánea sin tapar los poros, dejando un velo de frescura que prepara la piel perfectamente antes del maquillaje.',
     price: 64000,
     category: 'Skincare y Cuidado',
@@ -147,23 +165,50 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-005',
-    name: 'Rubor Líquido "Pétalo Dewy Blush"',
-    slug: 'rubor-liquido-petalo-dewy-blush',
-    shortDescription: 'Rubor líquido modulable de larga duración con microesferas de luz natural.',
-    description: 'Un rubor suave y sedoso que se funde como una segunda piel. Con una sola gota logras un aspecto saludable de mejillas sonrosadas y radiantes que dura todo el día sin resecar.',
-    price: 34000,
+    name: 'Iluminador Líquido "Luz de Luna" Shimmer Glow',
+    slug: 'iluminador-liquido-luz-de-luna-shimmer',
+    shortDescription: 'Iluminador fluido con micro-perlas de brillo húmedo.',
+    description: 'Un iluminador sedoso de efecto cristalino que se funde con tu piel sin marcar textura. Sus pigmentos perlados ultrafinos capturan la luz en pómulos, arco de cupido y clavículas con un acabado luminoso de larga duración.',
+    price: 38000,
     category: 'Rostro',
     stock: 30,
     imageUrl: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80',
     isFeatured: true,
-    benefits: [
-      'Se difumina impecable con esponja, brocha o dedos',
-      'Modulable desde un rubor sutil hasta alta intensidad',
-      'No levanta la base ni parchea polvos',
-      'Enriquecido con aceite de rosa mosqueta'
+    variantType: 'tono',
+    shades: [
+      {
+        id: 'shade-shimmer-01',
+        name: '01 Perla Champagne',
+        colorHex: '#F7E3D4',
+        finish: 'shimmer',
+        hint: 'Dorado perlado',
+        stock: 11,
+      },
+      {
+        id: 'shade-shimmer-02',
+        name: '02 Rosa Cuarzo',
+        colorHex: '#EBB3C0',
+        finish: 'shimmer',
+        hint: 'Brillo rosado',
+        stock: 10,
+      },
+      {
+        id: 'shade-shimmer-03',
+        name: '03 Bronce Sol',
+        colorHex: '#C98E70',
+        finish: 'shimmer',
+        hint: 'Bronce cálido',
+        stock: 9,
+      },
     ],
-    ingredients: 'Isododecano, Mica, Poligliceril-2 Triisostearato, Aceite de Rosa Mosqueta virgen, Sílice dimetilsililato, Tocoferol.',
-    howToUse: 'Coloca 1 a 2 puntos sobre la manzana del pómulo y difumina rápidamente hacia las sienes dando toques suaves.',
+    benefits: [
+      'Micro-destellos multidimensionales sin partículas gruesas',
+      'Se difumina fácil con yema de los dedos, esponja o brocha',
+      'No levanta la base ni parchea polvos',
+      'Enriquecido con aceite de rosa mosqueta y vitamina E'
+    ],
+    ingredients: 'Isododecano, Mica perlada, Poligliceril-2 Triisostearato, Aceite de Rosa Mosqueta virgen, Sílice, Tocoferol.',
+    howToUse: 'Coloca 1 a 2 punticos en la parte alta del pómulo, punta de la nariz y arco de cupido; difumina con toques suaves.',
     createdAt: '2026-01-20T10:00:00.000Z',
     updatedAt: '2026-01-20T10:00:00.000Z',
   },
@@ -171,7 +216,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 'prod-006',
     name: 'Tónico Botánico de Rosas & Hamamelis',
     slug: 'tonico-botanico-rosas-hamamelis',
-    shortDescription: 'Bruma purificante y descongestionante que equilibra el pH y refresca el cutis.',
+    shortDescription: 'Bruma de rosas sin alcohol que equilibra y refresca.',
     description: 'Destilado artesanal de pétalos frescos de rosa y agua floral de hamamelis sin alcohol. Ayuda a cerrar visiblemente los poros y prepara la piel para absorber mejor los sueros y tratamientos posteriores.',
     price: 32000,
     originalPrice: 38000,
@@ -192,43 +237,113 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-007',
-    name: 'Bruma Fijadora de Maquillaje "Velvet Mist" 24h',
-    slug: 'bruma-fijadora-maquillaje-velvet-mist',
-    shortDescription: 'Spray micro-difusor que sella el maquillaje por 24 horas protegiendo contra humedad y calor.',
-    description: 'Resistente al sudor y al clima tropical. Elimina el aspecto empolvado, funde todos los productos aplicados y crea un escudo invisible que mantiene tu look impecable desde la mañana hasta la noche.',
+    name: 'Polvo Compacto Micropulverizado "Velvet Skin" Matte',
+    slug: 'polvo-compacto-micropulverizado-velvet-skin',
+    shortDescription: 'Sella el maquillaje y matifica por 12h sin resecar.',
+    description: 'Fórmula ultra fina resistente a la humedad y al calor tropical. Matifica instantáneamente la zona T sin dejar sensación pesada ni efecto acartonado, adaptándose con suavidad a cada subtono de piel.',
     price: 42000,
     category: 'Rostro',
     stock: 25,
     imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
-    isFeatured: false,
-    benefits: [
-      'Poder anti-transferencia y control de brillo en zona T',
-      'Bruma ultra fina que no gotea ni mancha la máscara de pestañas',
-      'Acondiciona la piel con extracto de té verde y aloe vera'
+    isFeatured: true,
+    variantType: 'tono',
+    shades: [
+      {
+        id: 'shade-matte-01',
+        name: '01 Claro Marfil',
+        colorHex: '#F3DFC8',
+        finish: 'matte',
+        hint: 'Piel clara',
+        stock: 7,
+      },
+      {
+        id: 'shade-matte-02',
+        name: '02 Beige Natural',
+        colorHex: '#E5C29F',
+        finish: 'matte',
+        hint: 'Clara a media',
+        stock: 8,
+      },
+      {
+        id: 'shade-matte-03',
+        name: '03 Trigo Medio',
+        colorHex: '#C89B73',
+        finish: 'matte',
+        hint: 'Piel trigueña',
+        stock: 6,
+      },
+      {
+        id: 'shade-matte-04',
+        name: 'Traslúcido HD',
+        colorHex: '#FAF5F0',
+        finish: 'matte',
+        hint: 'Tono universal',
+        stock: 4,
+      },
     ],
-    ingredients: 'Agua, PVP, Polisorbato 20, Extracto de Té Verde, Jugo de hoja de Aloe Barbadensis, Fenoxietanol, Etilhexilglicerina.',
-    howToUse: 'Agita bien antes de usar. Sostén a 25 cm del rostro y rocía en forma de "X" y "T" con los ojos cerrados.',
+    benefits: [
+      'Efecto filtro suave que disimula poros y líneas finas',
+      'Control de brillo inteligente sin resecar las mejillas',
+      'Incluye espejo y pomo aterciopelado para retoques'
+    ],
+    ingredients: 'Talco cosmético purificado, Sílice esférica, Almidón de arroz, Vitamina E, Extracto de Aloe Vera.',
+    howToUse: 'Toma producto con brocha o pomo y presiona suavemente sobre frente, nariz, mentón y contorno de ojos.',
     createdAt: '2026-01-25T10:00:00.000Z',
     updatedAt: '2026-01-25T10:00:00.000Z',
   },
   {
     id: 'prod-008',
-    name: 'Aceite Reparador de Labios "Berry Glow Lip Oil"',
-    slug: 'aceite-reparador-labios-berry-glow',
-    shortDescription: 'Tratamiento labial jugoso que nutre en profundidad y da un brillo cristalino no pegajoso.',
-    description: 'Formulado con 5 aceites botánicos preciosos (frambuesa, jojoba, argán, almendras dulces y rosa mosqueta). Proporciona un sutil toque de color baya traslúcido y un confort sedoso incomparable.',
+    name: 'Lip Gloss Love Queen "Berry Glow"',
+    slug: 'lip-gloss-love-queen-berry-glow',
+    shortDescription: 'Gloss de brillo espejo con aceites, no pegajoso.',
+    description: 'Formulado con 5 aceites botánicos preciosos (frambuesa, jojoba, argán, almendras dulces y rosa mosqueta). Aporta volumen visual inmediato, nutrición profunda y tonos jugosos irresistibles.',
     price: 29000,
     category: 'Labios',
     stock: 35,
     imageUrl: 'https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&w=800&q=80',
-    isFeatured: false,
+    isFeatured: true,
+    variantType: 'tono',
+    shades: [
+      {
+        id: 'shade-gloss-01',
+        name: 'Rosa Dulce',
+        colorHex: '#E88CA5',
+        finish: 'glossy',
+        hint: 'Brillo sutil',
+        stock: 10,
+      },
+      {
+        id: 'shade-gloss-02',
+        name: 'Fresa Mágico',
+        colorHex: '#D94E6A',
+        finish: 'glossy',
+        hint: 'Rosado fresco',
+        stock: 9,
+      },
+      {
+        id: 'shade-gloss-03',
+        name: 'Cereza Jugosa',
+        colorHex: '#A8243B',
+        finish: 'glossy',
+        hint: 'Rojo jugoso',
+        stock: 8,
+      },
+      {
+        id: 'shade-gloss-04',
+        name: 'Nude Café',
+        colorHex: '#A66B5B',
+        finish: 'matte',
+        hint: 'Mate natural',
+        stock: 8,
+      },
+    ],
     benefits: [
       'Acabado espejo ultra brillante sin sensación pegajosa',
-      'Repara labios agrietados y escamados en 24 horas',
+      'Repara labios resecos desde la primera aplicación',
       'Aplicador jumbo suave tipo felpa de máxima precisión'
     ],
     ingredients: 'Aceite de semilla de frambuesa, Polibuteno, Aceite de Jojoba, Tocoferol, Extracto de fresa silvestre, Sabor natural.',
-    howToUse: 'Aplica directamente en cualquier momento del día. Úsalo solo para un look natural o sobre tu labial para un efecto gloss voluptuoso.',
+    howToUse: 'Aplica directamente en cualquier momento del día. Úsalo solo para un look fresco o sobre tu labial favorito.',
     createdAt: '2026-01-28T10:00:00.000Z',
     updatedAt: '2026-01-28T10:00:00.000Z',
   },
@@ -236,7 +351,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 'prod-009',
     name: 'Manteca Corporal Batida Rosa Mosqueta & Vainilla',
     slug: 'manteca-corporal-batida-rosa-mosqueta-vainilla',
-    shortDescription: 'Crema corporal rica batida en frío con manteca de cacao y aroma relajante.',
+    shortDescription: 'Crema corporal batida con rosa mosqueta y vainilla.',
     description: 'Una textura cremosa deliciosa que se derrite al contacto con la piel. Nutre intensamente codos, piernas y escote, mejorando la elasticidad y dejando una fragancia delicada que permanece por horas.',
     price: 49000,
     category: 'Skincare y Cuidado',
@@ -257,7 +372,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 'prod-010',
     name: 'Set de 8 Brochas Profesionales "Rose Edition" con Estuche',
     slug: 'set-brochas-profesionales-rose-edition',
-    shortDescription: 'Cerdas sintéticas ultra suaves hipoalergénicas con virola de oro rosa y mango ergonómico.',
+    shortDescription: '8 brochas suaves de oro rosa con estuche de viaje.',
     description: 'Incluye brochas esenciales para base, polvos, contorno, rubor, difuminado de ojos, cejas y labios. Vienen acompañadas de un neceser rígido acolchado de viaje en tono rosa empolvado.',
     price: 89000,
     originalPrice: 110000,
@@ -277,6 +392,40 @@ export const INITIAL_PRODUCTS: Product[] = [
     updatedAt: '2026-02-05T10:00:00.000Z',
   }
 ];
+
+/**
+ * Recursively strips `undefined` properties from objects and arrays before writing to Firestore,
+ * preventing FirebaseError: Unsupported field value: undefined.
+ */
+function sanitizeForFirestore<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item) => item !== undefined)
+      .map((item) => sanitizeForFirestore(item)) as unknown as T;
+  }
+  if (value !== null && typeof value === 'object') {
+    const cleaned: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (v !== undefined) {
+        cleaned[k] = sanitizeForFirestore(v);
+      }
+    }
+    return cleaned as T;
+  }
+  return value;
+}
+
+function normalizeProductWithShades(p: Product): Product {
+  const hasShades = Array.isArray(p.shades) && p.shades.length > 0;
+  return {
+    ...p,
+    category: normalizeCategory(p.category),
+    variantType: p.variantType || 'tono',
+    stock: hasShades
+      ? computeProductStock(p.shades, p.stock)
+      : Math.max(0, Number(p.stock) || 0),
+  };
+}
 
 class StoreService {
   private cachedProducts: Product[] = [];
@@ -312,18 +461,15 @@ class StoreService {
       if (storedProducts) {
         const parsed = JSON.parse(storedProducts);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          this.cachedProducts = parsed.map((p: Product) => ({
-            ...p,
-            category: normalizeCategory(p.category),
-          }));
+          this.cachedProducts = parsed.map((p: Product) => normalizeProductWithShades(p));
         } else {
-          this.cachedProducts = [...INITIAL_PRODUCTS];
+          this.cachedProducts = INITIAL_PRODUCTS.map((p) => normalizeProductWithShades(p));
         }
       } else {
-        this.cachedProducts = [...INITIAL_PRODUCTS];
+        this.cachedProducts = INITIAL_PRODUCTS.map((p) => normalizeProductWithShades(p));
       }
     } catch {
-      this.cachedProducts = [...INITIAL_PRODUCTS];
+      this.cachedProducts = INITIAL_PRODUCTS.map((p) => normalizeProductWithShades(p));
     }
 
     // 3. Orders
@@ -344,7 +490,7 @@ class StoreService {
     try {
       localStorage.setItem('dulzara_products_v1', JSON.stringify(this.cachedProducts));
     } catch (e) {
-      console.warn('Could not save products to localStorage:', e);
+      console.warn('Could not save products to localStorage (Firestore remains source of truth):', e);
     }
   }
 
@@ -375,11 +521,15 @@ class StoreService {
           } else {
             const list: Product[] = [];
             snapshot.forEach((docSnap) => {
-              const item = docSnap.data() as Product;
-              list.push({
-                ...item,
-                category: normalizeCategory(item.category),
-              });
+              const rawItem = docSnap.data() as Product;
+              const normalized = normalizeProductWithShades(rawItem);
+              list.push(normalized);
+            });
+            // Keep consistent ordering by createdAt descending or id
+            list.sort((a, b) => {
+              const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+              const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+              return tB - tA;
             });
             this.cachedProducts = list;
             this.saveProductsToLocalStorage();
@@ -449,9 +599,9 @@ class StoreService {
   async seedCatalogToFirestore(): Promise<void> {
     try {
       for (const prod of INITIAL_PRODUCTS) {
-        await setDoc(doc(db, 'products', prod.id), prod, { merge: true });
+        await setDoc(doc(db, 'products', prod.id), sanitizeForFirestore(prod));
       }
-      this.cachedProducts = [...INITIAL_PRODUCTS];
+      this.cachedProducts = INITIAL_PRODUCTS.map((p) => normalizeProductWithShades(p));
       this.saveProductsToLocalStorage();
       this.notifyProductListeners();
     } catch (err) {
@@ -530,25 +680,27 @@ class StoreService {
       .replace(/(^-|-$)/g, '');
 
     const now = new Date().toISOString();
-    const newProduct: Product = {
+    const hasShades = Array.isArray(productData.shades) && productData.shades.length > 0;
+    const computedStock = computeProductStock(productData.shades, productData.stock);
+
+    const newProduct: Product = sanitizeForFirestore({
       ...productData,
       id,
       slug,
+      variantType: productData.variantType || 'tono',
+      shades: hasShades ? productData.shades : undefined,
+      stock: computedStock,
       createdAt: now,
       updatedAt: now,
-    };
+    });
 
-    // Immediate optimistic local update
-    this.cachedProducts.unshift(newProduct);
+    // Immediate optimistic local update with fresh array reference
+    this.cachedProducts = [newProduct, ...this.cachedProducts];
     this.saveProductsToLocalStorage();
     this.notifyProductListeners();
 
-    // Persist to Firestore asynchronously
-    try {
-      await setDoc(doc(db, 'products', id), newProduct);
-    } catch (error) {
-      console.warn('Could not sync new product to Firestore immediately (saved locally):', error);
-    }
+    // Persist to Firestore (sanitized so no `undefined` fields cause rejection)
+    await setDoc(doc(db, 'products', id), newProduct);
 
     return newProduct;
   }
@@ -559,26 +711,35 @@ class StoreService {
       throw new Error(`Producto ${id} no encontrado.`);
     }
 
-    const updated: Product = {
+    const mergedShades = updates.shades !== undefined ? updates.shades : current.shades;
+    const hasShades = Array.isArray(mergedShades) && mergedShades.length > 0;
+    const rawStock = updates.stock !== undefined ? updates.stock : current.stock;
+    const computedStock = hasShades
+      ? computeProductStock(mergedShades, rawStock)
+      : Math.max(0, Number(rawStock) || 0);
+
+    const updatedRaw: Product = {
       ...current,
       ...updates,
+      variantType: updates.variantType || current.variantType || 'tono',
+      shades: hasShades ? mergedShades : [],
+      stock: computedStock,
       updatedAt: new Date().toISOString(),
     };
 
-    // Immediate optimistic local update
-    const idx = this.cachedProducts.findIndex((p) => p.id === id);
-    if (idx !== -1) {
-      this.cachedProducts[idx] = updated;
+    if (updates.originalPrice === undefined || !updates.originalPrice) {
+      delete updatedRaw.originalPrice;
     }
+
+    const updated = sanitizeForFirestore(updatedRaw);
+
+    // Immediate optimistic local update with fresh array reference
+    this.cachedProducts = this.cachedProducts.map((p) => (p.id === id ? updated : p));
     this.saveProductsToLocalStorage();
     this.notifyProductListeners();
 
-    // Persist to Firestore asynchronously
-    try {
-      await setDoc(doc(db, 'products', id), updated, { merge: true });
-    } catch (error) {
-      console.warn('Could not sync product update to Firestore immediately (saved locally):', error);
-    }
+    // Persist full sanitized document to Firestore
+    await setDoc(doc(db, 'products', id), updated);
 
     return updated;
   }
@@ -597,6 +758,18 @@ class StoreService {
   }
 
   async updateStock(id: string, newStock: number): Promise<Product> {
+    const current = this.getProductById(id);
+    if (current && current.shades && current.shades.length > 0) {
+      // Adjust the first available shade or distribute delta so total stock matches
+      const currentTotal = computeProductStock(current.shades, current.stock);
+      const delta = Math.max(0, newStock) - currentTotal;
+      if (delta !== 0) {
+        const updatedShades = current.shades.map((s, idx) =>
+          idx === 0 ? { ...s, stock: Math.max(0, s.stock + delta) } : s
+        );
+        return this.updateProduct(id, { shades: updatedShades });
+      }
+    }
     return this.updateProduct(id, { stock: Math.max(0, newStock) });
   }
 
@@ -612,7 +785,7 @@ class StoreService {
    */
   async createOrder(
     customer: CustomerInfo,
-    rawCartItems: { productId: string; quantity: number }[]
+    rawCartItems: { productId: string; quantity: number; selectedShade?: SelectedShade }[]
   ): Promise<{ order: Order }> {
     if (!rawCartItems || rawCartItems.length === 0) {
       throw new Error('El carrito no puede estar vacío.');
@@ -627,7 +800,35 @@ class StoreService {
       if (!canonical) {
         throw new Error(`El producto con referencia ${item.productId} ya no está disponible.`);
       }
-      if (canonical.stock < item.quantity) {
+
+      let resolvedShade: SelectedShade | undefined = item.selectedShade;
+      let shadeImageUrl = canonical.imageUrl;
+
+      if (canonical.shades && canonical.shades.length > 0) {
+        const matchingShade = item.selectedShade
+          ? canonical.shades.find((s) => s.id === item.selectedShade?.id)
+          : canonical.shades.find((s) => s.stock > 0) || canonical.shades[0];
+
+        if (!matchingShade) {
+          throw new Error(
+            `El tono seleccionado para "${canonical.name}" ya no se encuentra disponible.`
+          );
+        }
+        if (matchingShade.stock < item.quantity) {
+          throw new Error(
+            `Existencias insuficientes para "${canonical.name} (${matchingShade.name})". Disponibles: ${matchingShade.stock}, solicitadas: ${item.quantity}.`
+          );
+        }
+        resolvedShade = {
+          id: matchingShade.id,
+          name: matchingShade.name,
+          colorHex: matchingShade.colorHex,
+          finish: matchingShade.finish,
+        };
+        if (matchingShade.imageUrl) {
+          shadeImageUrl = matchingShade.imageUrl;
+        }
+      } else if (canonical.stock < item.quantity) {
         throw new Error(
           `Existencias insuficientes para "${canonical.name}". Disponibles: ${canonical.stock}, solicitadas: ${item.quantity}.`
         );
@@ -639,7 +840,9 @@ class StoreService {
         name: canonical.name,
         price: canonical.price, // Uses authentic database price
         quantity: item.quantity,
-        imageUrl: canonical.imageUrl,
+        imageUrl: shadeImageUrl,
+        variantType: canonical.variantType || 'tono',
+        selectedShade: resolvedShade,
       });
     }
 
@@ -650,11 +853,17 @@ class StoreService {
         : settings.standardShippingCost;
     const finalTotal = calculatedSubtotal + shippingCost;
 
-    const randomSuffix = Math.floor(100 + Math.random() * 900);
-    const orderId = `DLZ-2026-${randomSuffix}`;
+    // Generate collision-free readable order reference
+    let orderId = '';
+    do {
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const timeCode = Date.now().toString(36).slice(-2).toUpperCase();
+      orderId = `DLZ-2026-${randomNum}${timeCode}`;
+    } while (this.cachedOrders.some((o) => o.id === orderId));
+
     const now = new Date().toISOString();
 
-    const newOrder: Order = {
+    const newOrder: Order = sanitizeForFirestore({
       id: orderId,
       customer: { ...customer },
       items: verifiedItems,
@@ -666,10 +875,10 @@ class StoreService {
       whatsappSent: false,
       createdAt: now,
       updatedAt: now,
-    };
+    });
 
-    // Immediate local persistence
-    this.cachedOrders.unshift(newOrder);
+    // Immediate local persistence with fresh array reference
+    this.cachedOrders = [newOrder, ...this.cachedOrders];
     this.saveOrdersToLocalStorage();
     this.notifyOrderListeners();
 
@@ -685,91 +894,126 @@ class StoreService {
 
   /**
    * Status change with Atomic Inventory Deduction:
-   * When an order is confirmed or prepared, decrement stock of each item and persist immediately!
+   * Moving from 'pendiente' to any active status ('confirmado', 'preparando', 'enviado', 'entregado')
+   * deducts stock once. Moving back to 'pendiente' restores stock.
    */
   async updateOrderStatus(orderId: string, status: OrderStatus, notes?: string): Promise<Order> {
-    const order = this.cachedOrders.find((o) => o.id === orderId);
-    if (!order) {
+    const existingOrder = this.cachedOrders.find((o) => o.id === orderId);
+    if (!existingOrder) {
       throw new Error(`Pedido ${orderId} no encontrado.`);
     }
 
-    const oldStatus = order.status;
+    const oldStatus = existingOrder.status;
     const now = new Date().toISOString();
 
-    // 1. If moving from 'pendiente' to 'confirmado' or 'preparando', decrement inventory of each product
-    if (oldStatus === 'pendiente' && (status === 'confirmado' || status === 'preparando')) {
-      for (const item of order.items) {
-        const prod = this.cachedProducts.find((p) => p.id === item.productId);
-        if (prod) {
-          prod.stock = Math.max(0, prod.stock - item.quantity);
-          prod.updatedAt = now;
+    const wasStockDeducted = oldStatus !== 'pendiente';
+    const willStockBeDeducted = status !== 'pendiente';
+    const stockDeltaFactor =
+      !wasStockDeducted && willStockBeDeducted
+        ? -1
+        : wasStockDeducted && !willStockBeDeducted
+        ? 1
+        : 0;
+
+    const updatedProductIds = new Set<string>();
+
+    if (stockDeltaFactor !== 0) {
+      this.cachedProducts = this.cachedProducts.map((prod) => {
+        const matchingOrderItems = existingOrder.items.filter(
+          (it) => it.productId === prod.id
+        );
+        if (matchingOrderItems.length === 0) return prod;
+
+        updatedProductIds.add(prod.id);
+        let nextShades = prod.shades ? prod.shades.map((s) => ({ ...s })) : undefined;
+        let nextStock = prod.stock;
+
+        for (const item of matchingOrderItems) {
+          const delta = stockDeltaFactor * item.quantity;
+          if (nextShades && nextShades.length > 0 && item.selectedShade) {
+            nextShades = nextShades.map((s) =>
+              s.id === item.selectedShade?.id
+                ? { ...s, stock: Math.max(0, s.stock + delta) }
+                : s
+            );
+            nextStock = computeProductStock(nextShades, nextStock);
+          } else {
+            nextStock = Math.max(0, nextStock + delta);
+          }
         }
-      }
+
+        return {
+          ...prod,
+          ...(nextShades ? { shades: nextShades } : {}),
+          stock: nextStock,
+          updatedAt: now,
+        };
+      });
+
       this.saveProductsToLocalStorage();
       this.notifyProductListeners();
     }
 
-    // 2. If moving from 'confirmado' or 'preparando' back to 'pendiente', restore inventory
-    if ((oldStatus === 'confirmado' || oldStatus === 'preparando') && status === 'pendiente') {
-      for (const item of order.items) {
-        const prod = this.cachedProducts.find((p) => p.id === item.productId);
-        if (prod) {
-          prod.stock = prod.stock + item.quantity;
-          prod.updatedAt = now;
-        }
-      }
-      this.saveProductsToLocalStorage();
-      this.notifyProductListeners();
-    }
+    const updatedOrder: Order = {
+      ...existingOrder,
+      status,
+      statusNotes: notes !== undefined ? notes : existingOrder.statusNotes,
+      updatedAt: now,
+    };
 
-    // 3. Update order state
-    order.status = status;
-    if (notes !== undefined) order.statusNotes = notes;
-    order.updatedAt = now;
+    this.cachedOrders = this.cachedOrders.map((o) =>
+      o.id === orderId ? updatedOrder : o
+    );
     this.saveOrdersToLocalStorage();
     this.notifyOrderListeners();
 
-    // 4. Persist to Firestore (both stock changes and order changes)
+    // Persist to Firestore (both stock changes and order changes)
     try {
-      // Update products stock in Firestore
-      if (oldStatus === 'pendiente' && (status === 'confirmado' || status === 'preparando')) {
-        for (const item of order.items) {
-          const prod = this.cachedProducts.find((p) => p.id === item.productId);
-          if (prod) {
-            await setDoc(doc(db, 'products', item.productId), { stock: prod.stock, updatedAt: now }, { merge: true });
-          }
+      for (const prodId of updatedProductIds) {
+        const prod = this.cachedProducts.find((p) => p.id === prodId);
+        if (prod) {
+          await setDoc(
+            doc(db, 'products', prodId),
+            sanitizeForFirestore({
+              stock: prod.stock,
+              ...(prod.shades ? { shades: prod.shades } : {}),
+              updatedAt: now,
+            }),
+            { merge: true }
+          );
         }
       }
-      // Update order in Firestore
+
       const orderRef = doc(db, 'orders', orderId);
       await setDoc(
         orderRef,
-        {
+        sanitizeForFirestore({
           status,
-          statusNotes: notes !== undefined ? notes : order.statusNotes,
+          statusNotes: updatedOrder.statusNotes,
           updatedAt: now,
-        },
+        }),
         { merge: true }
       );
     } catch (firestoreErr) {
       console.warn('Firestore update warning (applied and persisted in local state):', firestoreErr);
     }
 
-    return order;
+    return updatedOrder;
   }
 
   async markWhatsappSent(orderId: string): Promise<void> {
-    const order = this.cachedOrders.find((o) => o.id === orderId);
-    if (order) {
-      order.whatsappSent = true;
-      this.saveOrdersToLocalStorage();
-      this.notifyOrderListeners();
-    }
+    const now = new Date().toISOString();
+    this.cachedOrders = this.cachedOrders.map((o) =>
+      o.id === orderId ? { ...o, whatsappSent: true, updatedAt: now } : o
+    );
+    this.saveOrdersToLocalStorage();
+    this.notifyOrderListeners();
+
     try {
       const orderRef = doc(db, 'orders', orderId);
       await updateDoc(orderRef, {
         whatsappSent: true,
-        updatedAt: new Date().toISOString(),
+        updatedAt: now,
       });
     } catch {
       // Ignored for UI responsiveness
@@ -790,7 +1034,7 @@ class StoreService {
   }
 
   async resetCatalogToDefault(): Promise<void> {
-    this.cachedProducts = [...INITIAL_PRODUCTS];
+    this.cachedProducts = INITIAL_PRODUCTS.map((p) => normalizeProductWithShades(p));
     this.saveProductsToLocalStorage();
     this.notifyProductListeners();
     await this.seedCatalogToFirestore();
@@ -801,7 +1045,7 @@ class StoreService {
   }
 
   async saveSettings(newSettings: Partial<StoreSettings>): Promise<StoreSettings> {
-    const merged = { ...this.cachedSettings, ...newSettings };
+    const merged = sanitizeForFirestore({ ...this.cachedSettings, ...newSettings });
     this.cachedSettings = merged;
 
     try {

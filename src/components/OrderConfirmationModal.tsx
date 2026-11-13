@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { MessageCircle, Copy, Check, ArrowRight, Package } from 'lucide-react';
 import { Order } from '../types/store';
-import { formatCOP, buildWhatsAppMessage } from '../utils/formatters';
+import {
+  formatCOP,
+  buildWhatsAppMessage,
+  getVariantLabel,
+  getCartItemKey,
+} from '../utils/formatters';
+import { SwatchCircle } from './SwatchCircle';
 
 interface OrderConfirmationModalProps {
   order: Order | null;
@@ -136,14 +142,30 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
             </h4>
             <div className="divide-y divide-[#F7E5E9] border border-[#F7E5E9] rounded-xl overflow-hidden bg-[#FFFDF9]">
               {order.items.map((it) => (
-                <div key={it.productId} className="p-3 flex items-center justify-between text-xs">
+                <div
+                  key={getCartItemKey(it.productId, it.selectedShade?.id)}
+                  className="p-3 flex items-center justify-between text-xs gap-2"
+                >
                   <div>
-                    <span className="font-medium text-[#382A30]">{it.name}</span>
+                    <span className="font-medium text-[#382A30] block">{it.name}</span>
+                    {it.selectedShade && (
+                      <span className="inline-flex items-center gap-1.5 text-[11px] text-[#382A30]/85 bg-[#F7E5E9]/70 px-2 py-0.5 rounded-full my-0.5 border border-[#E8BFCB]/50">
+                        <SwatchCircle
+                          colorHex={it.selectedShade.colorHex}
+                          finish={it.selectedShade.finish}
+                          name={it.selectedShade.name}
+                          size="xs"
+                        />
+                        <span className="font-medium">
+                          {getVariantLabel(it.variantType)}: {it.selectedShade.name}
+                        </span>
+                      </span>
+                    )}
                     <span className="text-[#382A30]/50 block">
                       Cantidad: {it.quantity} × {formatCOP(it.price)}
                     </span>
                   </div>
-                  <span className="font-bold text-[#382A30] tabular-nums">
+                  <span className="font-bold text-[#382A30] tabular-nums shrink-0">
                     {formatCOP(it.price * it.quantity)}
                   </span>
                 </div>

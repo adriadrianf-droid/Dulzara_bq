@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, Heart, Droplets, Eye, Package } from 'lucide-react';
 
 interface BeautyImageProps {
@@ -6,7 +6,6 @@ interface BeautyImageProps {
   alt: string;
   className?: string;
   category?: string;
-  aspectRatio?: 'square' | 'wide' | 'portrait';
   priority?: boolean;
 }
 
@@ -18,6 +17,10 @@ export const BeautyImage: React.FC<BeautyImageProps> = ({
   priority = false,
 }) => {
   const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
 
   // Pick an icon based on category for genuine error states
   const renderCategoryIcon = () => {
@@ -68,13 +71,14 @@ export const BeautyImage: React.FC<BeautyImageProps> = ({
       {/* Actual Image: loads immediately without text flash or artificial opacity hiding */}
       {!hasError && (
         <img
+          key={src}
           src={src}
           alt={alt}
           referrerPolicy="no-referrer"
           loading={priority ? 'eager' : 'lazy'}
           decoding={priority ? 'sync' : 'async'}
           onError={() => setHasError(true)}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105 animate-dulzara-fade"
         />
       )}
     </div>

@@ -81,36 +81,36 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         ✦
       </span>
 
-      {/* Mobile-optimized padding py-5 for fast reach to catalog */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 md:py-20 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 lg:gap-12 items-center">
+      {/* Balanced vertical spacing for mobile and desktop */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 lg:py-16 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center">
           
           {/* Left Text Column */}
-          <div className="lg:col-span-7 space-y-3.5 sm:space-y-6">
+          <div className="lg:col-span-7 space-y-3.5 sm:space-y-5">
             
             {/* Kicker: Delicada píldora con fondo #F7E5E9 */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-[#F7E5E9] border border-[#E8BFCB]/60 shadow-xs">
-              <span className="text-[11px] sm:text-xs font-semibold tracking-wider uppercase text-[#382A30]">
+            <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-[#F7E5E9] border border-[#E8BFCB]/60 shadow-2xs">
+              <span className="text-[10.5px] sm:text-xs font-semibold tracking-[0.08em] uppercase text-[#382A30]">
                 {kicker}
               </span>
             </div>
 
             {/* Main Title (H1) Playfair Display */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-serif-brand font-semibold text-[#382A30] leading-[1.15] text-balance">
+            <h1 className="text-[28px] min-[390px]:text-[32px] sm:text-5xl lg:text-[54px] font-serif-brand font-semibold text-[#382A30] leading-[1.13] tracking-[-0.015em] text-balance">
               {renderTitle(rawTitle)}
             </h1>
 
             {/* Subtitle Plus Jakarta Sans */}
-            <p className="text-sm sm:text-lg text-[#382A30]/85 font-sans leading-relaxed max-w-xl text-pretty">
+            <p className="text-[13.5px] sm:text-base lg:text-lg text-[#382A30]/80 font-sans leading-[1.6] max-w-xl text-pretty">
               {subtitle}
             </p>
 
             {/* Compact CTAs */}
-            <div className="pt-1 sm:pt-2 flex flex-wrap items-center gap-2.5 sm:gap-4">
+            <div className="pt-1 sm:pt-2 flex flex-wrap items-center gap-2.5 sm:gap-3.5">
               <button
                 type="button"
                 onClick={onExploreClick}
-                className="px-5 sm:px-7 py-2.5 sm:py-3.5 bg-[#B9788B] hover:bg-[#a6687a] text-white font-medium text-xs sm:text-sm rounded-full transition-all shadow-sm hover:shadow-md active:scale-98 flex items-center gap-1.5 sm:gap-2 cursor-pointer"
+                className="px-5 sm:px-7 py-2.5 sm:py-3.5 bg-[#B9788B] hover:bg-[#a6687a] text-white font-semibold text-xs sm:text-sm rounded-full transition-all shadow-sm hover:shadow-md active:scale-98 flex items-center gap-1.5 sm:gap-2 cursor-pointer"
               >
                 <span>{buttonText}</span>
               </button>
@@ -118,7 +118,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               <button
                 type="button"
                 onClick={onOpenWhatsAppAdvice}
-                className="px-4 sm:px-6 py-2.5 sm:py-3.5 bg-white hover:bg-[#F7E5E9]/60 text-[#382A30] border border-[#E8BFCB] font-medium text-xs sm:text-sm rounded-full transition-all flex items-center gap-1.5 sm:gap-2 hover:border-[#B9788B] cursor-pointer"
+                className="px-4 sm:px-6 py-2.5 sm:py-3.5 bg-white/95 hover:bg-[#F7E5E9]/60 text-[#382A30] border border-[#E8BFCB] font-medium text-xs sm:text-sm rounded-full transition-all flex items-center gap-1.5 sm:gap-2 hover:border-[#B9788B] cursor-pointer shadow-2xs"
               >
                 <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#25D366]" />
                 <span>Asesoría por WhatsApp</span>
@@ -126,17 +126,17 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </div>
           </div>
 
-          {/* Right Visual Column: Stylized Compact Horizontal Banner on Mobile */}
+          {/* Right Visual Column */}
           <div className="lg:col-span-5">
             <div className="relative mx-auto max-w-md lg:max-w-none">
               
-              {/* Main Visual Frame (Compact h-44 sm:h-52 on mobile, standard md:h-[420px] on desktop) */}
-              <div className="relative rounded-2xl md:rounded-3xl overflow-hidden shadow-md md:shadow-lg border-2 border-white bg-white group">
+              {/* Main Visual Frame */}
+              <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-md sm:shadow-lg border-2 border-white ring-1 ring-[#E8BFCB]/40 bg-white group">
                 <BeautyImage
                   src={imageUrl}
                   alt="Dulzara Belleza y Cuidado Personal"
                   priority={true}
-                  className="w-full h-44 sm:h-52 md:h-[420px] object-cover transition-transform duration-700 ease-out group-hover:scale-102"
+                  className="w-full h-48 sm:h-60 md:h-[380px] lg:h-[410px] object-cover transition-transform duration-700 ease-out group-hover:scale-102"
                 />
 
                 {/* Única etiqueta flotante delicada y limpia en una esquina con icono de corazón */}

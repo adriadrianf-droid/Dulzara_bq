@@ -19,6 +19,8 @@
         "benefits": { "type": "array" },
         "ingredients": { "type": "string", "maxLength": 2000 },
         "howToUse": { "type": "string", "maxLength": 2000 },
+        "variantType": { "type": "string", "enum": ["tono", "aroma", "estilo"] },
+        "shades": { "type": "array" },
         "createdAt": { "type": "string", "maxLength": 64 },
         "updatedAt": { "type": "string", "maxLength": 64 }
       },

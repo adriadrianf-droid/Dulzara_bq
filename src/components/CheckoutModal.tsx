@@ -1,8 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { X, MessageCircle, AlertCircle, ShieldCheck, Loader2 } from 'lucide-react';
 import { CartItem, CustomerInfo, Order, StoreSettings } from '../types/store';
-import { formatCOP, COLOMBIAN_DEPARTMENTS, buildWhatsAppMessage, createWhatsAppUrl } from '../utils/formatters';
+import {
+  formatCOP,
+  COLOMBIAN_DEPARTMENTS,
+  buildWhatsAppMessage,
+  createWhatsAppUrl,
+  getVariantLabel,
+  getCartItemKey,
+} from '../utils/formatters';
 import { storeService } from '../services/storeService';
+import { SwatchCircle } from './SwatchCircle';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -111,12 +119,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
     try {
       // SECURITY ENFORCEMENT:
-      // We pass only { productId, quantity } to storeService.
+      // We pass { productId, quantity, selectedShade } to storeService.
       // The storeService strictly looks up real database prices and real stock,
-      // recalibrates total, and decrements stock safely.
+      // recalibrates total, and validates shade availability safely.
       const rawOrderPayload = items.map((i) => ({
         productId: i.product.id,
         quantity: i.quantity,
+        selectedShade: i.selectedShade,
       }));
 
       const result = await storeService.createOrder(formData, rawOrderPayload);
@@ -374,6 +383,39 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
             {/* Order Summary Inset */}
             <div className="p-4 rounded-2xl bg-[#F7E5E9]/50 border border-[#E8BFCB]/40 space-y-2.5 text-xs">
+              <div className="space-y-1.5 pb-2 border-b border-[#E8BFCB]/40 max-h-36 overflow-y-auto pr-1">
+                {items.map((item) => {
+                  const key = getCartItemKey(item.product.id, item.selectedShade?.id);
+                  return (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between gap-2 text-[#382A30]/90"
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-semibold shrink-0">{item.quantity}x</span>
+                        <span className="truncate">{item.product.name}</span>
+                        {item.selectedShade && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/90 border border-[#E8BFCB]/60 text-[10px] font-medium shrink-0">
+                            <SwatchCircle
+                              colorHex={item.selectedShade.colorHex}
+                              finish={item.selectedShade.finish}
+                              name={item.selectedShade.name}
+                              size="xs"
+                            />
+                            <span>
+                              {getVariantLabel(item.product.variantType)}: {item.selectedShade.name}
+                            </span>
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-semibold tabular-nums shrink-0">
+                        {formatCOP(item.product.price * item.quantity)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
               <div className="flex justify-between text-[#382A30]/80">
                 <span>{items.reduce((s, it) => s + it.quantity, 0)} productos en tu orden</span>
                 <span className="font-semibold tabular-nums">{formatCOP(subtotal)}</span>

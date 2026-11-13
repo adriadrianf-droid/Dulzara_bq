@@ -1,10 +1,32 @@
-import { CustomerInfo, OrderItem } from '../types/store';
+import { CustomerInfo, OrderItem, VariantType } from '../types/store';
+
+/**
+ * Returns the capitalized Spanish label for a product's variantType
+ */
+export function getVariantLabel(variantType?: VariantType): string {
+  switch (variantType) {
+    case 'aroma':
+      return 'Aroma';
+    case 'estilo':
+      return 'Estilo';
+    case 'tono':
+    default:
+      return 'Tono';
+  }
+}
+
+/**
+ * Generates the unique key for a cart item combining product.id and selectedShade.id
+ */
+export function getCartItemKey(productId: string, shadeId?: string): string {
+  return `${productId}_${shadeId || 'default'}`;
+}
 
 /**
  * Format numbers into currency format ($ XX.XXX)
  * Example: 45000 -> "$ 45.000"
  */
-export function formatCOP(amount: number, _includeCurrency = false): string {
+export function formatCOP(amount: number): string {
   if (isNaN(amount) || amount === null || amount === undefined) {
     return '$ 0';
   }
@@ -58,11 +80,13 @@ export function buildWhatsAppMessage(
   total: number
 ): string {
   const itemsText = items
-    .map(
-      (item, idx) =>
-        `${idx + 1}. *${item.name}*\n   *Cantidad:* ${item.quantity} | *Unitario:* ${formatCOP(item.price)}\n   *Subtotal:* ${formatCOP(item.price * item.quantity)}`
-    )
-    .join('\n\n');
+    .map((item) => {
+      const shadeInfo = item.selectedShade
+        ? ` (${getVariantLabel(item.variantType)}: ${item.selectedShade.name})`
+        : '';
+      return `• ${item.quantity}x ${item.name}${shadeInfo} - ${formatCOP(item.price * item.quantity)}`;
+    })
+    .join('\n');
 
   const shippingText =
     shippingCost === 0 ? '¡GRATIS! (Superó monto mínimo)' : formatCOP(shippingCost);

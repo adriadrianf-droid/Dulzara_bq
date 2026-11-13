@@ -1,6 +1,6 @@
 import React from 'react';
 import { MessageCircle, Heart, ShieldCheck, Truck, Instagram } from 'lucide-react';
-import { StoreSettings } from '../types/store';
+import { StoreSettings, OFFICIAL_CATEGORIES } from '../types/store';
 import { createWhatsAppUrl, formatCOP } from '../utils/formatters';
 
 interface FooterProps {
@@ -72,61 +72,19 @@ export const Footer: React.FC<FooterProps> = ({
               Colecciones
             </h4>
             <ul className="space-y-2 text-xs text-white/80">
-              <li>
-                <button
-                  onClick={() => {
-                    onFilterCategory('Rostro');
-                    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="hover:text-white transition-colors"
-                >
-                  Rostro
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => {
-                    onFilterCategory('Ojos y Cejas');
-                    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="hover:text-white transition-colors"
-                >
-                  Ojos y Cejas
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => {
-                    onFilterCategory('Labios');
-                    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="hover:text-white transition-colors"
-                >
-                  Labios
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => {
-                    onFilterCategory('Skincare y Cuidado');
-                    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="hover:text-white transition-colors"
-                >
-                  Skincare y Cuidado
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => {
-                    onFilterCategory('Kits y Accesorios');
-                    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className="hover:text-white transition-colors"
-                >
-                  Kits y Accesorios
-                </button>
-              </li>
+              {OFFICIAL_CATEGORIES.map((cat) => (
+                <li key={cat}>
+                  <button
+                    onClick={() => {
+                      onFilterCategory(cat);
+                      document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
+                    {cat}
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
 

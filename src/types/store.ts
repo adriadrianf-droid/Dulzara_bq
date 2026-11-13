@@ -13,6 +13,26 @@ export const OFFICIAL_CATEGORIES: ProductCategory[] = [
   'Kits y Accesorios',
 ];
 
+export type VariantType = 'tono' | 'aroma' | 'estilo';
+export type ShadeFinish = 'matte' | 'glossy' | 'shimmer';
+
+export interface ProductShade {
+  id: string;
+  name: string;
+  colorHex: string;
+  finish?: ShadeFinish;
+  hint?: string;
+  stock: number;
+  imageUrl?: string;
+}
+
+export interface SelectedShade {
+  id: string;
+  name: string;
+  colorHex: string;
+  finish?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -28,6 +48,8 @@ export interface Product {
   benefits?: string[];
   ingredients?: string;
   howToUse?: string;
+  variantType?: VariantType; // por defecto 'tono'
+  shades?: ProductShade[];
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +57,7 @@ export interface Product {
 export interface CartItem {
   product: Product;
   quantity: number;
+  selectedShade?: SelectedShade;
 }
 
 export interface CustomerInfo {
@@ -55,6 +78,8 @@ export interface OrderItem {
   price: number;
   quantity: number;
   imageUrl: string;
+  variantType?: VariantType;
+  selectedShade?: SelectedShade;
 }
 
 export interface Order {

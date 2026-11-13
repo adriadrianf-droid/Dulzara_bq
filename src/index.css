@@ -14,10 +14,23 @@ body {
   font-family: var(--font-sans);
   background-color: #FFFDF9;
   color: #382A30;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .font-serif-brand {
   font-family: var(--font-serif);
+  letter-spacing: -0.01em;
+}
+
+/* Hide scrollbar for category pills while keeping touch scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Custom delicate scrollbar */
@@ -35,3 +48,60 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #B9788B;
 }
+
+/* Smooth GPU-accelerated animations for storefront micro-interactions */
+@keyframes dulzaraPopIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes dulzaraToastIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes dulzaraImageFade {
+  0% {
+    opacity: 0.35;
+    transform: scale(1.015);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-dulzara-pop {
+  animation: dulzaraPopIn 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-dulzara-toast {
+  animation: dulzaraToastIn 240ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-dulzara-fade {
+  animation: dulzaraImageFade 260ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-dulzara-pop,
+  .animate-dulzara-toast,
+  .animate-dulzara-fade {
+    animation: none !important;
+  }
+}
+

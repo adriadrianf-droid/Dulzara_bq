@@ -22,26 +22,44 @@ export const AUTHORIZED_ADMIN_EMAILS = [
   'rosalessanjuancristian@gmail.com',
 ];
 
+function isSuperAdminEmail(email: string): boolean {
+  const lower = email.toLowerCase();
+  return AUTHORIZED_ADMIN_EMAILS.some((adm) => adm.toLowerCase() === lower);
+}
+
+function buildAdminUser(
+  uid: string,
+  email: string,
+  displayName?: string | null,
+  isSuper = true
+): AdminUser {
+  return {
+    uid,
+    email,
+    name:
+      email.toLowerCase() === 'dulzara.bq@gmail.com'
+        ? 'Dulzara Admin'
+        : displayName || email.split('@')[0],
+    role: isSuper ? 'superadmin' : 'admin',
+    lastLogin: new Date().toISOString(),
+  };
+}
+
 class AuthService {
   private currentUser: AdminUser | null = null;
   private listeners: ((user: AdminUser | null) => void)[] = [];
 
   constructor() {
-    // Listen to Firebase Auth state in real time
     onAuthStateChanged(auth, async (user: User | null) => {
       if (user && user.email) {
         const isAdmin = await this.checkIsAdmin(user);
         if (isAdmin) {
-          const isSuper = AUTHORIZED_ADMIN_EMAILS.some(
-            (adm) => adm.toLowerCase() === user.email!.toLowerCase()
+          this.currentUser = buildAdminUser(
+            user.uid,
+            user.email,
+            user.displayName,
+            isSuperAdminEmail(user.email)
           );
-          this.currentUser = {
-            uid: user.uid,
-            email: user.email,
-            name: user.email.toLowerCase() === 'dulzara.bq@gmail.com' ? 'Dulzara Admin' : (user.displayName || user.email.split('@')[0]),
-            role: isSuper ? 'superadmin' : 'admin',
-            lastLogin: new Date().toISOString(),
-          };
         } else {
           this.currentUser = null;
         }
@@ -70,17 +88,11 @@ class AuthService {
     return this.currentUser;
   }
 
-  isAuthenticated(): boolean {
-    return this.currentUser !== null;
-  }
-
   async checkIsAdmin(user: User): Promise<boolean> {
     if (!user.email) return false;
-    const emailLower = user.email.toLowerCase();
-    if (AUTHORIZED_ADMIN_EMAILS.some((adm) => adm.toLowerCase() === emailLower)) {
+    if (isSuperAdminEmail(user.email)) {
       return true;
     }
-    // Check in Firestore /admins/{uid}
     try {
       const adminDoc = await getDoc(doc(db, 'admins', user.uid));
       return adminDoc.exists();
@@ -90,7 +102,7 @@ class AuthService {
   }
 
   /**
-   * One-Click Real Google Sign-In for Admin
+   * One-Click Real Google Sign-In for Admin with authorization check
    */
   async loginWithGoogle(): Promise<AdminUser> {
     try {
@@ -98,12 +110,17 @@ class AuthService {
       const user = result.user;
 
       if (!user.email) {
+        await signOut(auth);
         throw new Error('La cuenta de Google no contiene un correo válido.');
       }
 
-      const isSuper = AUTHORIZED_ADMIN_EMAILS.some(
-        (adm) => adm.toLowerCase() === user.email!.toLowerCase()
-      );
+      const isAdmin = await this.checkIsAdmin(user);
+      if (!isAdmin) {
+        await signOut(auth);
+        throw new Error('Esta cuenta de Google no tiene permisos de administrador en Dulzara.');
+      }
+
+      const isSuper = isSuperAdminEmail(user.email);
 
       if (isSuper) {
         try {
@@ -117,18 +134,11 @@ class AuthService {
             { merge: true }
           );
         } catch {
-          // Ignored
+          // Ignored if offline
         }
       }
 
-      const adminUser: AdminUser = {
-        uid: user.uid,
-        email: user.email,
-        name: user.email.toLowerCase() === 'dulzara.bq@gmail.com' ? 'Dulzara Admin' : (user.displayName || user.email.split('@')[0]),
-        role: isSuper ? 'superadmin' : 'admin',
-        lastLogin: new Date().toISOString(),
-      };
-
+      const adminUser = buildAdminUser(user.uid, user.email, user.displayName, isSuper);
       this.currentUser = adminUser;
       this.notifyListeners();
       return adminUser;
@@ -148,9 +158,7 @@ class AuthService {
       cleanEmail.toLowerCase() === 'dulzara.bq@gmail.com' &&
       pass === 'melanadrian2026';
 
-    const isDesignatedAdmin =
-      isMasterAdmin ||
-      AUTHORIZED_ADMIN_EMAILS.some((adm) => adm.toLowerCase() === cleanEmail.toLowerCase());
+    const isDesignatedAdmin = isMasterAdmin || isSuperAdminEmail(cleanEmail);
 
     if (!isDesignatedAdmin) {
       throw new Error('Este correo no tiene permisos de administrador en Dulzara.');
@@ -161,19 +169,21 @@ class AuthService {
 
       try {
         userCredential = await signInWithEmailAndPassword(auth, cleanEmail, pass);
-      } catch (signInErr: any) {
+      } catch (signInErr: unknown) {
+        const code = (signInErr as { code?: string })?.code;
         if (
-          signInErr.code === 'auth/user-not-found' ||
-          signInErr.code === 'auth/invalid-credential' ||
-          signInErr.code === 'auth/invalid-login-credentials'
+          code === 'auth/user-not-found' ||
+          code === 'auth/invalid-credential' ||
+          code === 'auth/invalid-login-credentials'
         ) {
           try {
             userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, pass);
-          } catch (createErr: any) {
+          } catch (createErr: unknown) {
+            const createCode = (createErr as { code?: string })?.code;
             if (isMasterAdmin) {
               userCredential = null;
             } else {
-              if (createErr.code === 'auth/email-already-in-use') {
+              if (createCode === 'auth/email-already-in-use') {
                 throw new Error('Contraseña incorrecta para el usuario.');
               }
               throw createErr;
@@ -192,7 +202,6 @@ class AuthService {
 
       const uid = userCredential?.user?.uid || 'admin_dulzara_master';
 
-      // Register admin doc in Firestore if needed
       try {
         await setDoc(
           doc(db, 'admins', uid),
@@ -207,26 +216,21 @@ class AuthService {
         // Ignored
       }
 
-      const adminUser: AdminUser = {
-        uid,
-        email: cleanEmail,
-        name: 'Dulzara Admin',
-        role: 'superadmin',
-        lastLogin: new Date().toISOString(),
-      };
-
+      const adminUser = buildAdminUser(uid, cleanEmail, 'Dulzara Admin', true);
       this.currentUser = adminUser;
       this.notifyListeners();
       return adminUser;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Email Sign In Error:', err);
-      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+      const code = (err as { code?: string })?.code;
+      const message = (err as { message?: string })?.message;
+      if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
         throw new Error('Contraseña incorrecta. Verifique sus credenciales.');
       }
-      if (err.code === 'auth/invalid-email') {
+      if (code === 'auth/invalid-email') {
         throw new Error('Formato de correo electrónico no válido.');
       }
-      throw new Error(err.message || 'Error de autenticación.');
+      throw new Error(message || 'Error de autenticación.');
     }
   }
 

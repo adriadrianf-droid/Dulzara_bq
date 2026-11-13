@@ -1,17 +1,24 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import {
   ArrowUpDown,
   MessageCircle,
   Truck,
   ShieldCheck,
   Gift,
-  Sparkles
+  Sparkles,
+  ShoppingBag
 } from 'lucide-react';
 
-import { Product, CartItem, Order, StoreSettings } from './types/store';
+import { Product, CartItem, Order, StoreSettings, SelectedShade } from './types/store';
 import { storeService } from './services/storeService';
 import { authService, AdminUser } from './services/authService';
-import { formatCOP, createWhatsAppUrl, matchesSearchQuery } from './utils/formatters';
+import {
+  formatCOP,
+  createWhatsAppUrl,
+  matchesSearchQuery,
+  getCartItemKey,
+  getVariantLabel,
+} from './utils/formatters';
 
 import { Navbar } from './components/Navbar';
 import { HeroBanner } from './components/HeroBanner';
@@ -66,6 +73,7 @@ export default function App() {
 
   // Toast / notification feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
 
   // Real-time synchronization with Firestore & Favicon enforcement
   useEffect(() => {
@@ -105,8 +113,81 @@ export default function App() {
       unsubscribeOrders();
       unsubscribeSettings();
       unsubscribeAuth();
+      if (toastTimerRef.current !== null) {
+        window.clearTimeout(toastTimerRef.current);
+      }
     };
   }, []);
+
+  // Synchronize open ProductDetailModal & Cart items with live product updates from Firestore
+  useEffect(() => {
+    if (products.length === 0) return;
+
+    setSelectedProduct((prev) => {
+      if (!prev) return null;
+      return products.find((p) => p.id === prev.id) || null;
+    });
+
+    setCartItems((prev) => {
+      if (prev.length === 0) return prev;
+      let changed = false;
+      const synced: CartItem[] = [];
+
+      for (const item of prev) {
+        const liveProduct = products.find((p) => p.id === item.product.id);
+        if (!liveProduct) {
+          changed = true;
+          continue;
+        }
+
+        const hasLiveShades = Array.isArray(liveProduct.shades) && liveProduct.shades.length > 0;
+        const liveShade =
+          hasLiveShades && item.selectedShade
+            ? liveProduct.shades!.find((s) => s.id === item.selectedShade?.id)
+            : undefined;
+
+        const maxStock = hasLiveShades
+          ? liveShade
+            ? liveShade.stock
+            : 0
+          : liveProduct.stock;
+
+        if (maxStock <= 0) {
+          changed = true;
+          continue;
+        }
+
+        const clampedQty = Math.min(maxStock, item.quantity);
+        const nextSelectedShade: SelectedShade | undefined = liveShade
+          ? {
+              id: liveShade.id,
+              name: liveShade.name,
+              colorHex: liveShade.colorHex,
+              finish: liveShade.finish,
+            }
+          : undefined;
+
+        if (
+          item.product !== liveProduct ||
+          clampedQty !== item.quantity ||
+          nextSelectedShade?.name !== item.selectedShade?.name ||
+          nextSelectedShade?.colorHex !== item.selectedShade?.colorHex ||
+          nextSelectedShade?.finish !== item.selectedShade?.finish
+        ) {
+          changed = true;
+          synced.push({
+            product: liveProduct,
+            selectedShade: nextSelectedShade,
+            quantity: clampedQty,
+          });
+        } else {
+          synced.push(item);
+        }
+      }
+
+      return changed ? synced : prev;
+    });
+  }, [products]);
 
   const loadData = () => {
     setProducts(storeService.getProducts());
@@ -124,47 +205,95 @@ export default function App() {
   }, [cartItems]);
 
   const showToast = (msg: string) => {
+    if (toastTimerRef.current !== null) {
+      window.clearTimeout(toastTimerRef.current);
+    }
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 2500);
+    toastTimerRef.current = window.setTimeout(() => {
+      setToastMessage(null);
+      toastTimerRef.current = null;
+    }, 2500);
   };
 
-  // Cart operations
-  const handleAddToCart = (product: Product, quantity = 1) => {
+  // Cart operations using unique key ${product.id}_${selectedShade?.id || 'default'}
+  const handleAddToCart = (
+    product: Product,
+    quantity = 1,
+    selectedShade?: SelectedShade
+  ) => {
     if (product.stock <= 0) return;
 
+    const targetShadeObj =
+      selectedShade && product.shades
+        ? product.shades.find((s) => s.id === selectedShade.id)
+        : undefined;
+    const maxStock = targetShadeObj ? targetShadeObj.stock : product.stock;
+    if (maxStock <= 0) return;
+
+    const targetKey = getCartItemKey(product.id, selectedShade?.id);
+
     setCartItems((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id);
+      const existing = prev.find(
+        (item) =>
+          getCartItemKey(item.product.id, item.selectedShade?.id) === targetKey
+      );
       if (existing) {
-        const newQty = Math.min(product.stock, existing.quantity + quantity);
+        const newQty = Math.min(maxStock, existing.quantity + quantity);
         return prev.map((item) =>
-          item.product.id === product.id ? { ...item, quantity: newQty } : item
+          getCartItemKey(item.product.id, item.selectedShade?.id) === targetKey
+            ? { ...item, product, selectedShade, quantity: newQty }
+            : item
         );
       } else {
-        return [...prev, { product, quantity: Math.min(product.stock, quantity) }];
+        return [
+          ...prev,
+          {
+            product,
+            selectedShade,
+            quantity: Math.min(maxStock, quantity),
+          },
+        ];
       }
     });
 
-    showToast(`¡Agregaste "${product.name}" a tu bolsa!`);
+    const shadeLabel = selectedShade
+      ? ` (${getVariantLabel(product.variantType)}: ${selectedShade.name})`
+      : '';
+    showToast(`¡Agregaste "${product.name}"${shadeLabel} a tu bolsa!`);
   };
 
-  const handleUpdateQuantity = (productId: string, quantity: number) => {
+  const handleUpdateQuantity = (cartItemKey: string, quantity: number) => {
     if (quantity <= 0) {
-      handleRemoveFromCart(productId);
+      handleRemoveFromCart(cartItemKey);
       return;
     }
 
     setCartItems((prev) =>
       prev.map((item) => {
-        if (item.product.id === productId) {
-          return { ...item, quantity: Math.min(item.product.stock, quantity) };
+        const itemKey = getCartItemKey(item.product.id, item.selectedShade?.id);
+        if (itemKey === cartItemKey || item.product.id === cartItemKey) {
+          const matchingShade =
+            item.selectedShade && item.product.shades
+              ? item.product.shades.find((s) => s.id === item.selectedShade?.id)
+              : undefined;
+          const maxStock = matchingShade
+            ? matchingShade.stock
+            : item.product.stock;
+          return { ...item, quantity: Math.min(maxStock, quantity) };
         }
         return item;
       })
     );
   };
 
-  const handleRemoveFromCart = (productId: string) => {
-    setCartItems((prev) => prev.filter((item) => item.product.id !== productId));
+  const handleRemoveFromCart = (cartItemKey: string) => {
+    setCartItems((prev) =>
+      prev.filter(
+        (item) =>
+          getCartItemKey(item.product.id, item.selectedShade?.id) !==
+            cartItemKey && item.product.id !== cartItemKey
+      )
+    );
   };
 
   const handleClearCart = () => {
@@ -285,12 +414,12 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#FFFDF9] text-[#382A30] font-sans flex flex-col selection:bg-[#E8BFCB] selection:text-[#382A30]">
       
-      {/* Toast feedback (Top-aligned below header, fully horizontal & non-obstructive) */}
+      {/* Toast feedback (Top-aligned below single-row header, fully horizontal & non-obstructive) */}
       {toastMessage && (
         <aside
           role="status"
           aria-live="polite"
-          className="fixed top-[104px] sm:top-28 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0 z-50 w-[92vw] max-w-md sm:w-auto sm:max-w-lg bg-[#FFFDF9]/98 backdrop-blur-md text-[#382A30] border border-[#E8BFCB] px-3.5 sm:px-4 py-2.5 rounded-full shadow-lg shadow-[#382A30]/8 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-3 duration-200"
+          className="fixed top-20 sm:top-22 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0 z-50 w-[92vw] max-w-md sm:w-auto sm:max-w-lg bg-[#FFFDF9]/98 backdrop-blur-md text-[#382A30] border border-[#E8BFCB] px-3.5 sm:px-4 py-2.5 rounded-full shadow-lg shadow-[#382A30]/8 flex items-center justify-between gap-3 animate-dulzara-toast"
         >
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="w-5 h-5 rounded-full bg-[#F7E5E9] text-[#B9788B] flex items-center justify-center shrink-0">
@@ -305,7 +434,7 @@ export default function App() {
               setToastMessage(null);
               setIsCartOpen(true);
             }}
-            className="shrink-0 px-3 py-1 rounded-full bg-[#B9788B] hover:bg-[#a6687a] text-white text-[11px] font-semibold transition-all active:scale-95 shadow-xs whitespace-nowrap"
+            className="shrink-0 px-3 py-1 rounded-full bg-[#B9788B] hover:bg-[#a6687a] text-white text-[11px] font-semibold transition-all active:scale-95 shadow-xs whitespace-nowrap cursor-pointer"
           >
             Ver bolsa
           </button>
@@ -338,7 +467,6 @@ export default function App() {
         activeCategory={activeCategory}
         onSearchChange={setSearchQuery}
         searchQuery={searchQuery}
-        settings={settings}
         products={products}
         onSelectProduct={setSelectedProduct}
         onSearchSubmit={handleSearchSubmit}
@@ -358,47 +486,52 @@ export default function App() {
         />
 
         {/* Store Trust & Perks Strip */}
-        <section className="bg-white border-y border-[#E8BFCB]/30 py-6">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <section className="bg-white border-y border-[#E8BFCB]/30 py-4 sm:py-6">
+          <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-5">
               
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#F7E5E9] flex items-center justify-center shrink-0 text-[#B9788B]">
-                  <Truck className="w-5 h-5" />
+              <div className="flex items-center gap-2.5 sm:gap-3.5 p-2.5 sm:p-3.5 rounded-2xl bg-[#FFFDF9] border border-[#F7E5E9]">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#F7E5E9] flex items-center justify-center shrink-0 text-[#B9788B]">
+                  <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-[#382A30]">Envíos a toda Colombia</h4>
-                  <p className="text-[11px] text-[#382A30]/60">Gratis por compras desde {formatCOP(settings.freeShippingThreshold)}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#F7E5E9] flex items-center justify-center shrink-0 text-[#B9788B]">
-                  <MessageCircle className="w-5 h-5 text-[#25D366]" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-[#382A30]">Pedido por WhatsApp</h4>
-                  <p className="text-[11px] text-[#382A30]/60">Atención rápida y personalizada</p>
+                <div className="min-w-0">
+                  <h4 className="text-[11.5px] sm:text-xs font-semibold text-[#382A30] leading-tight">Envíos a toda Colombia</h4>
+                  <p className="text-[10.5px] sm:text-[11px] text-[#382A30]/65 leading-snug mt-0.5">
+                    Gratis desde{' '}
+                    <span className="whitespace-nowrap">
+                      {formatCOP(settings.freeShippingThreshold).replace('$ ', '$')}
+                    </span>
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#F7E5E9] flex items-center justify-center shrink-0 text-[#B9788B]">
-                  <ShieldCheck className="w-5 h-5" />
+              <div className="flex items-center gap-2.5 sm:gap-3.5 p-2.5 sm:p-3.5 rounded-2xl bg-[#FFFDF9] border border-[#F7E5E9]">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#F7E5E9] flex items-center justify-center shrink-0 text-[#B9788B]">
+                  <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-[#25D366]" />
                 </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-[#382A30]">100% Original</h4>
-                  <p className="text-[11px] text-[#382A30]/60">Fórmulas seguras y certificadas</p>
+                <div className="min-w-0">
+                  <h4 className="text-[11.5px] sm:text-xs font-semibold text-[#382A30] leading-tight">Pedido por WhatsApp</h4>
+                  <p className="text-[10.5px] sm:text-[11px] text-[#382A30]/65 leading-snug mt-0.5">Atención rápida y cercana</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#F7E5E9] flex items-center justify-center shrink-0 text-[#B9788B]">
-                  <Gift className="w-5 h-5" />
+              <div className="flex items-center gap-2.5 sm:gap-3.5 p-2.5 sm:p-3.5 rounded-2xl bg-[#FFFDF9] border border-[#F7E5E9]">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#F7E5E9] flex items-center justify-center shrink-0 text-[#B9788B]">
+                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-[#382A30]">Empaque de Regalo</h4>
-                  <p className="text-[11px] text-[#382A30]/60">Cada pedido viaja perfumado</p>
+                <div className="min-w-0">
+                  <h4 className="text-[11.5px] sm:text-xs font-semibold text-[#382A30] leading-tight">100% Original</h4>
+                  <p className="text-[10.5px] sm:text-[11px] text-[#382A30]/65 leading-snug mt-0.5">Fórmulas seguras y certificadas</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 sm:gap-3.5 p-2.5 sm:p-3.5 rounded-2xl bg-[#FFFDF9] border border-[#F7E5E9]">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#F7E5E9] flex items-center justify-center shrink-0 text-[#B9788B]">
+                  <Gift className="w-4 h-4 sm:w-5 sm:h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-[11.5px] sm:text-xs font-semibold text-[#382A30] leading-tight">Empaque de Regalo</h4>
+                  <p className="text-[10.5px] sm:text-[11px] text-[#382A30]/65 leading-snug mt-0.5">Cada pedido viaja perfumado</p>
                 </div>
               </div>
 
@@ -406,35 +539,38 @@ export default function App() {
           </div>
         </section>
 
-        {/* Main Catalog Section with scroll-mt-24 for sticky header clearance */}
-        <section id="catalogo" className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 scroll-mt-24">
+        {/* Main Catalog Section with scroll-mt-20 for sticky header clearance */}
+        <section id="catalogo" className="py-8 sm:py-14 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 space-y-6 sm:space-y-8 scroll-mt-20">
           
           {/* Section Header */}
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-3.5 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
               <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#B9788B]">
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.08em] text-[#B9788B]">
                   Catálogo Oficial
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-serif-brand font-semibold text-[#382A30]">
+                <h2 className="text-2xl sm:text-3xl font-serif-brand font-semibold text-[#382A30] leading-tight mt-0.5">
                   {activeCategory ? `Colección: ${activeCategory}` : 'Explora Todos los Productos'}
                 </h2>
               </div>
 
-              {/* Controls: Featured filter & Sort selector */}
-              <div className="flex flex-wrap items-center gap-3 text-xs">
-                <label className="flex items-center gap-2 cursor-pointer select-none text-[#382A30]/80 hover:text-[#382A30] transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={onlyFeatured}
-                    onChange={(e) => setOnlyFeatured(e.target.checked)}
-                    className="rounded text-[#B9788B] focus:ring-[#B9788B] border-[#E8BFCB]"
-                  />
-                  <span className="flex items-center gap-1 font-medium">
-                    <span className="text-[#B9788B] text-xs" aria-hidden="true">✦</span>
-                    Sólo destacados
+              {/* Controls: Cohesive Featured pill button & Sort selector */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setOnlyFeatured((prev) => !prev)}
+                  aria-pressed={onlyFeatured}
+                  className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer select-none ${
+                    onlyFeatured
+                      ? 'bg-[#B9788B] text-white border-[#B9788B] shadow-2xs'
+                      : 'bg-white text-[#382A30]/80 border-[#E8BFCB] hover:border-[#B9788B] hover:text-[#382A30]'
+                  }`}
+                >
+                  <span className={onlyFeatured ? 'text-white' : 'text-[#B9788B]'} aria-hidden="true">
+                    ✦
                   </span>
-                </label>
+                  <span>Sólo destacados</span>
+                </button>
 
                 <div className="relative inline-flex items-center border border-[#E8BFCB] rounded-xl bg-white hover:border-[#B9788B] transition-colors">
                   <ArrowUpDown className="w-3.5 h-3.5 text-[#B9788B] pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 select-none" />
@@ -443,11 +579,11 @@ export default function App() {
                     onChange={(e) =>
                       setSortBy(e.target.value as 'all' | 'price-asc' | 'price-desc')
                     }
-                    className="w-full bg-transparent focus:outline-none text-[#382A30] cursor-pointer pl-7 pr-2.5 py-1.5 text-xs rounded-xl"
+                    className="w-full bg-transparent focus:outline-none text-[#382A30] font-medium cursor-pointer pl-7 pr-3 py-1.5 text-xs rounded-xl"
                   >
-                    <option value="all">Todos</option>
-                    <option value="price-asc">Menor a mayor</option>
-                    <option value="price-desc">Mayor a menor</option>
+                    <option value="all">Ordenar: Todos</option>
+                    <option value="price-asc">Precio: Menor a mayor</option>
+                    <option value="price-desc">Precio: Mayor a menor</option>
                   </select>
                 </div>
               </div>
@@ -590,12 +726,12 @@ export default function App() {
               )}
             </div>
           ) : (
-            <div id="grid-productos" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div id="grid-productos" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
               {sortedProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onAddToCart={(p) => handleAddToCart(p, 1)}
+                  onAddToCart={(p, shade) => handleAddToCart(p, 1, shade)}
                   onQuickView={setSelectedProduct}
                   isItemInCart={cartItems.some((ci) => ci.product.id === product.id)}
                 />
@@ -607,12 +743,44 @@ export default function App() {
 
       </main>
 
+      {/* Mobile Floating Quick-Bag Bar (Only on phones when bag has items and no modal is open) */}
+      {cartCount > 0 && !isCartOpen && !isCheckoutOpen && !selectedProduct && !completedOrder && (
+        <div className="fixed bottom-5 left-3.5 right-18 z-40 sm:hidden animate-dulzara-pop">
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="w-full bg-[#382A30]/95 backdrop-blur-md text-[#FFFDF9] border border-[#E8BFCB]/30 rounded-full px-3.5 py-2.5 shadow-lg flex items-center justify-between gap-2 active:scale-98 transition-transform cursor-pointer"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="relative w-7 h-7 rounded-full bg-[#B9788B] flex items-center justify-center shrink-0">
+                <ShoppingBag className="w-3.5 h-3.5 text-white" />
+                <span className="absolute -top-1 -right-1 bg-white text-[#382A30] text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center tabular-nums">
+                  {cartCount}
+                </span>
+              </div>
+              <div className="text-left min-w-0">
+                <span className="text-xs font-bold block leading-tight tabular-nums truncate">
+                  {formatCOP(cartSubtotal)}
+                </span>
+                <span className="text-[10px] text-[#E8BFCB] block leading-tight truncate">
+                  {cartSubtotal >= settings.freeShippingThreshold
+                    ? '¡Envío gratis desbloqueado! ✦'
+                    : `Faltan ${formatCOP(settings.freeShippingThreshold - cartSubtotal)} para envío gratis`}
+                </span>
+              </div>
+            </div>
+            <span className="shrink-0 bg-[#B9788B] text-white text-[11px] font-semibold px-3 py-1 rounded-full">
+              Ver bolsa
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* Floating WhatsApp Quick Consultation Button */}
-      <div className="fixed bottom-6 right-6 z-40">
+      <div className="fixed bottom-5 right-3.5 sm:bottom-6 sm:right-6 z-40">
         <button
           onClick={handleOpenWhatsAppAdvice}
           aria-label="Contactar por WhatsApp"
-          className="flex items-center gap-2.5 px-4 py-3 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 text-xs font-semibold"
+          className="flex items-center gap-2.5 px-3.5 py-3 sm:px-4 sm:py-3 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 text-xs font-semibold cursor-pointer"
         >
           <MessageCircle className="w-5 h-5 fill-white text-[#25D366]" />
           <span className="hidden sm:inline">¿Dudas? Escríbenos</span>

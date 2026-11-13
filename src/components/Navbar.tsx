@@ -6,7 +6,7 @@ import {
   matchesSearchQuery,
   getSpanishWordVariants,
 } from '../utils/formatters';
-import { StoreSettings, Product } from '../types/store';
+import { Product, OFFICIAL_CATEGORIES } from '../types/store';
 
 interface NavbarProps {
   cartCount: number;
@@ -18,7 +18,6 @@ interface NavbarProps {
   activeCategory: string | null;
   onSearchChange: (query: string) => void;
   searchQuery: string;
-  settings: StoreSettings;
   products?: Product[];
   onSelectProduct?: (product: Product) => void;
   onSearchSubmit?: (query: string) => void;
@@ -34,12 +33,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeCategory,
   onSearchChange,
   searchQuery,
-  settings,
   products = [],
   onSelectProduct,
   onSearchSubmit,
 }) => {
-  const [showPromo, setShowPromo] = useState(true);
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -149,8 +146,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       }
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      // User pressed Enter: directly search and navigate to matching catalog results
-      handleExecuteSearch(searchQuery);
+      if (dropdownOpen && highlightedIndex >= 0 && suggestions[highlightedIndex]) {
+        handleSelectProduct(suggestions[highlightedIndex]);
+      } else {
+        handleExecuteSearch(searchQuery);
+      }
     } else if (e.key === 'Escape') {
       setDropdownOpen(false);
       searchInputRef.current?.blur();
@@ -200,26 +200,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-[#FFFDF9]/95 backdrop-blur-md border-b border-[#E8BFCB]/40 transition-colors w-full">
-      {/* Slim Top Announcement Bar (<= 40px, dismissible) */}
-      {showPromo && (
-        <div className="h-8 bg-[#382A30] text-[#FFFDF9] text-xs px-3 sm:px-4 flex items-center justify-between font-sans">
-          <div className="flex-1 text-center truncate text-[11px] sm:text-xs">
-            <span>Envíos a toda Colombia</span>
-            <span className="mx-1.5 sm:mx-2 text-[#E8BFCB]" aria-hidden="true">·</span>
-            <span>Gratis desde {formatCOP(settings.freeShippingThreshold)}</span>
-            <span className="mx-1.5 sm:mx-2 text-[#E8BFCB]" aria-hidden="true">·</span>
-            <span className="hidden sm:inline">Pide directo por WhatsApp</span>
-          </div>
-          <button
-            onClick={() => setShowPromo(false)}
-            aria-label="Cerrar aviso"
-            className="text-[#E8BFCB] hover:text-white p-1 ml-1 sm:ml-2 transition-colors cursor-pointer"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
-
       {/* Main Top Bar */}
       <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-1 sm:gap-4 md:gap-8">
         
@@ -263,46 +243,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             Inicio & Todo
           </button>
-          <button
-            onClick={() => handleCategoryClick('Rostro')}
-            className={`whitespace-nowrap shrink-0 hover:text-[#B9788B] transition-colors cursor-pointer ${
-              activeCategory === 'Rostro' ? 'text-[#B9788B] font-semibold' : ''
-            }`}
-          >
-            Rostro
-          </button>
-          <button
-            onClick={() => handleCategoryClick('Ojos y Cejas')}
-            className={`whitespace-nowrap shrink-0 hover:text-[#B9788B] transition-colors cursor-pointer ${
-              activeCategory === 'Ojos y Cejas' ? 'text-[#B9788B] font-semibold' : ''
-            }`}
-          >
-            Ojos y Cejas
-          </button>
-          <button
-            onClick={() => handleCategoryClick('Labios')}
-            className={`whitespace-nowrap shrink-0 hover:text-[#B9788B] transition-colors cursor-pointer ${
-              activeCategory === 'Labios' ? 'text-[#B9788B] font-semibold' : ''
-            }`}
-          >
-            Labios
-          </button>
-          <button
-            onClick={() => handleCategoryClick('Skincare y Cuidado')}
-            className={`whitespace-nowrap shrink-0 hover:text-[#B9788B] transition-colors cursor-pointer ${
-              activeCategory === 'Skincare y Cuidado' ? 'text-[#B9788B] font-semibold' : ''
-            }`}
-          >
-            Skincare y Cuidado
-          </button>
-          <button
-            onClick={() => handleCategoryClick('Kits y Accesorios')}
-            className={`whitespace-nowrap shrink-0 hover:text-[#B9788B] transition-colors cursor-pointer ${
-              activeCategory === 'Kits y Accesorios' ? 'text-[#B9788B] font-semibold' : ''
-            }`}
-          >
-            Kits y Accesorios
-          </button>
+          {OFFICIAL_CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => handleCategoryClick(cat)}
+              className={`whitespace-nowrap shrink-0 hover:text-[#B9788B] transition-colors cursor-pointer ${
+                activeCategory === cat ? 'text-[#B9788B] font-semibold' : ''
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </nav>
 
         {/* Zone 3: Search, Admin Access, Shopping Bag, and Mobile Menu Pill */}
@@ -529,7 +480,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
             <span className="text-xs font-medium hidden sm:inline whitespace-nowrap">
-              {cartCount > 0 ? formatCOP(cartSubtotal, false) : 'Bolsa'}
+              {cartCount > 0 ? formatCOP(cartSubtotal) : 'Bolsa'}
             </span>
           </button>
 
@@ -561,36 +512,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               Todos los productos
             </button>
-            <button
-              onClick={() => handleCategoryClick('Rostro')}
-              className="text-left py-2 px-3 text-sm font-medium rounded-lg hover:bg-[#F7E5E9]"
-            >
-              Rostro
-            </button>
-            <button
-              onClick={() => handleCategoryClick('Ojos y Cejas')}
-              className="text-left py-2 px-3 text-sm font-medium rounded-lg hover:bg-[#F7E5E9]"
-            >
-              Ojos y Cejas
-            </button>
-            <button
-              onClick={() => handleCategoryClick('Labios')}
-              className="text-left py-2 px-3 text-sm font-medium rounded-lg hover:bg-[#F7E5E9]"
-            >
-              Labios
-            </button>
-            <button
-              onClick={() => handleCategoryClick('Skincare y Cuidado')}
-              className="text-left py-2 px-3 text-sm font-medium rounded-lg hover:bg-[#F7E5E9]"
-            >
-              Skincare y Cuidado
-            </button>
-            <button
-              onClick={() => handleCategoryClick('Kits y Accesorios')}
-              className="text-left py-2 px-3 text-sm font-medium rounded-lg hover:bg-[#F7E5E9]"
-            >
-              Kits y Accesorios
-            </button>
+            {OFFICIAL_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => handleCategoryClick(cat)}
+                className="text-left py-2 px-3 text-sm font-medium rounded-lg hover:bg-[#F7E5E9]"
+              >
+                {cat}
+              </button>
+            ))}
           </div>
 
           <div className="pt-1 flex items-center justify-between text-xs text-[#382A30]/70">

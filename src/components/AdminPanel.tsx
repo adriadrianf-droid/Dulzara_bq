@@ -26,11 +26,42 @@ import {
   Image as ImageIcon,
   Heart
 } from 'lucide-react';
-import { Product, Order, OrderStatus, StoreSettings } from '../types/store';
-import { formatCOP, formatDateCO } from '../utils/formatters';
-import { storeService, DEFAULT_HERO_SETTINGS } from '../services/storeService';
+import {
+  Product,
+  Order,
+  OrderStatus,
+  StoreSettings,
+  VariantType,
+  ProductShade,
+  ShadeFinish,
+  OFFICIAL_CATEGORIES,
+} from '../types/store';
+import {
+  formatCOP,
+  formatDateCO,
+  getVariantLabel,
+  getCartItemKey,
+  createWhatsAppUrl,
+} from '../utils/formatters';
+import { storeService, DEFAULT_HERO_SETTINGS, computeProductStock } from '../services/storeService';
 import { AdminUser } from '../services/authService';
 import { BeautyImage } from './BeautyImage';
+import { SwatchCircle } from './SwatchCircle';
+
+const MAKEUP_QUICK_PALETTE: { name: string; hex: string }[] = [
+  { name: 'Claro Marfil', hex: '#F3DFC8' },
+  { name: 'Beige Natural', hex: '#E5C29F' },
+  { name: 'Trigo Medio', hex: '#C89B73' },
+  { name: 'Perla Champagne', hex: '#F7E3D4' },
+  { name: 'Rosa Dulce', hex: '#E88CA5' },
+  { name: 'Rosa Cuarzo', hex: '#EBB3C0' },
+  { name: 'Fresa Mágico', hex: '#D94E6A' },
+  { name: 'Cereza Jugosa', hex: '#A8243B' },
+  { name: 'Nude Café', hex: '#A66B5B' },
+  { name: 'Bronce Sol', hex: '#C98E70' },
+  { name: 'Café Oscuro', hex: '#4A3228' },
+  { name: 'Negro Intenso', hex: '#1C191A' },
+];
 
 interface AdminPanelProps {
   user: AdminUser;
@@ -65,6 +96,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Product Modal (Create / Edit)
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [hasVariants, setHasVariants] = useState(false);
   const [productFormData, setProductFormData] = useState<{
     name: string;
     shortDescription: string;
@@ -78,6 +110,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     benefits: string;
     ingredients: string;
     howToUse: string;
+    variantType: VariantType;
+    shades: ProductShade[];
   }>({
     name: '',
     shortDescription: '',
@@ -91,6 +125,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     benefits: '',
     ingredients: '',
     howToUse: '',
+    variantType: 'tono',
+    shades: [],
   });
 
   // Settings form state
@@ -116,71 +152,141 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }, 3500);
   };
 
-  // Hero Image compression state
+  // Image compression states
   const [isCompressingHeroImage, setIsCompressingHeroImage] = useState(false);
+  const [isCompressingProductImage, setIsCompressingProductImage] = useState(false);
+  const [compressingShadeId, setCompressingShadeId] = useState<string | null>(null);
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
+  const [productFormError, setProductFormError] = useState<string | null>(null);
 
-  const handleHeroFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImageFromDevice = (
+    file: File,
+    maxDim = 760,
+    quality = 0.8,
+    maxDataUrlLength = 190000
+  ): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        reject(new Error('Por favor selecciona un archivo de imagen válido.'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('No se pudo inicializar el procesador de imagen.'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const encodeAtQuality = (q: number): string => {
+            let out = '';
+            try {
+              out = canvas.toDataURL('image/webp', q);
+            } catch {
+              out = '';
+            }
+            if (!out || !out.startsWith('data:image/webp')) {
+              out = canvas.toDataURL('image/jpeg', q);
+            }
+            return out;
+          };
+
+          let compressedData = encodeAtQuality(quality);
+          // Step down quality if needed so Firestore documents with multiple photos stay well under 1 MiB
+          if (compressedData.length > maxDataUrlLength) {
+            compressedData = encodeAtQuality(Math.max(0.55, quality * 0.72));
+          }
+          resolve(compressedData);
+        };
+        img.onerror = () => reject(new Error('No se pudo procesar la imagen seleccionada.'));
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('No se pudo leer el archivo desde el dispositivo.'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleHeroFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      showFeedback('Por favor selecciona un archivo de imagen válido.');
-      return;
-    }
-
     setIsCompressingHeroImage(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxDim = 1200;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          let compressedData = '';
-          try {
-            compressedData = canvas.toDataURL('image/webp', 0.82);
-          } catch {
-            compressedData = '';
-          }
-          if (!compressedData || !compressedData.startsWith('data:image/webp')) {
-            compressedData = canvas.toDataURL('image/jpeg', 0.82);
-          }
-          setSettingsForm((prev) => ({
-            ...prev,
-            heroImageUrl: compressedData,
-          }));
-          showFeedback('¡Imagen optimizada con éxito! Haz clic en "Guardar Configuración" para publicarla.');
-        }
-        setIsCompressingHeroImage(false);
-      };
-      img.onerror = () => {
-        setIsCompressingHeroImage(false);
-        showFeedback('No se pudo procesar la imagen seleccionada.');
-      };
-      img.src = event.target?.result as string;
-    };
-    reader.onerror = () => {
+    try {
+      const compressedData = await compressImageFromDevice(file, 1200, 0.82);
+      setSettingsForm((prev) => ({
+        ...prev,
+        heroImageUrl: compressedData,
+      }));
+      showFeedback('¡Imagen optimizada con éxito! Haz clic en "Guardar Configuración" para publicarla.');
+    } catch (err) {
+      showFeedback(err instanceof Error ? err.message : 'No se pudo procesar la imagen.');
+    } finally {
       setIsCompressingHeroImage(false);
-      showFeedback('No se pudo leer el archivo desde el dispositivo.');
-    };
-    reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProductImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setProductFormError(null);
+    setIsCompressingProductImage(true);
+    try {
+      const compressedData = await compressImageFromDevice(file, 760, 0.8);
+      setProductFormData((prev) => ({
+        ...prev,
+        imageUrl: compressedData,
+      }));
+    } catch (err) {
+      setProductFormError(
+        err instanceof Error ? err.message : 'No se pudo adjuntar la foto del producto.'
+      );
+    } finally {
+      setIsCompressingProductImage(false);
+    }
+  };
+
+  const handleShadeImageUpload = async (
+    shadeId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setProductFormError(null);
+    setCompressingShadeId(shadeId);
+    try {
+      const compressedData = await compressImageFromDevice(file, 600, 0.78);
+      handleUpdateShadeRow(shadeId, { imageUrl: compressedData });
+    } catch (err) {
+      setProductFormError(
+        err instanceof Error ? err.message : 'No se pudo adjuntar la foto del tono.'
+      );
+    } finally {
+      setCompressingShadeId(null);
+    }
   };
 
   const handleRestoreHeroDefaults = () => {
@@ -199,6 +305,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
     setSettingsForm(s);
   }, [settings]);
+
+  // Keep selectedOrder synced when orders update in real time
+  React.useEffect(() => {
+    setSelectedOrder((prev) => {
+      if (!prev) return null;
+      return orders.find((o) => o.id === prev.id) || null;
+    });
+  }, [orders]);
 
   // Derived real KPI metrics (strictly authentic, no fake data)
   const confirmedOrders = orders.filter((o) => o.status !== 'pendiente');
@@ -261,6 +375,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Open Create Product
   const handleOpenCreateProduct = () => {
     setEditingProduct(null);
+    setHasVariants(false);
+    setProductFormError(null);
     setProductFormData({
       name: '',
       shortDescription: '',
@@ -269,11 +385,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       originalPrice: undefined,
       category: 'Rostro',
       stock: 15,
-      imageUrl: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80',
+      imageUrl: '',
       isFeatured: false,
       benefits: 'Fórmula hidratante\nAlta duración\nCruelty-free',
       ingredients: 'Extractos botánicos, Vitamina E, Aceite de Jojoba',
       howToUse: 'Aplicar suavemente sobre el rostro con movimientos circulares.',
+      variantType: 'tono',
+      shades: [],
     });
     setIsProductModalOpen(true);
   };
@@ -281,6 +399,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Open Edit Product
   const handleOpenEditProduct = (prod: Product) => {
     setEditingProduct(prod);
+    setProductFormError(null);
+    const prodHasShades = Array.isArray(prod.shades) && prod.shades.length > 0;
+    setHasVariants(prodHasShades);
     setProductFormData({
       name: prod.name,
       shortDescription: prod.shortDescription,
@@ -294,57 +415,256 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       benefits: prod.benefits ? prod.benefits.join('\n') : '',
       ingredients: prod.ingredients || '',
       howToUse: prod.howToUse || '',
+      variantType: prod.variantType || 'tono',
+      shades: prodHasShades ? prod.shades!.map((s) => ({ ...s })) : [],
     });
     setIsProductModalOpen(true);
+  };
+
+  // 1-Click Quick Templates for Shades
+  const handleApplyShadeTemplate = (template: 'rostro' | 'labios' | 'ojos') => {
+    const stamp = Date.now().toString(36);
+    let templateRows: ProductShade[] = [];
+
+    if (template === 'rostro') {
+      templateRows = [
+        {
+          id: `shade-${stamp}-1`,
+          name: '01 Claro Marfil',
+          colorHex: '#F3DFC8',
+          finish: 'matte',
+          hint: 'Piel clara',
+          stock: 8,
+        },
+        {
+          id: `shade-${stamp}-2`,
+          name: '02 Beige Natural',
+          colorHex: '#E5C29F',
+          finish: 'matte',
+          hint: 'Piel clara a media',
+          stock: 8,
+        },
+        {
+          id: `shade-${stamp}-3`,
+          name: '03 Trigo Medio',
+          colorHex: '#C89B73',
+          finish: 'matte',
+          hint: 'Piel trigueña',
+          stock: 6,
+        },
+        {
+          id: `shade-${stamp}-4`,
+          name: 'Traslúcido HD',
+          colorHex: '#FAF5F0',
+          finish: 'matte',
+          hint: 'Se adapta a tu piel',
+          stock: 6,
+        },
+      ];
+    } else if (template === 'labios') {
+      templateRows = [
+        {
+          id: `shade-${stamp}-1`,
+          name: 'Rosa Dulce',
+          colorHex: '#E88CA5',
+          finish: 'glossy',
+          hint: 'Brillo sutil diario',
+          stock: 8,
+        },
+        {
+          id: `shade-${stamp}-2`,
+          name: 'Fresa Mágico',
+          colorHex: '#D94E6A',
+          finish: 'glossy',
+          hint: 'Tono rosado fresco',
+          stock: 8,
+        },
+        {
+          id: `shade-${stamp}-3`,
+          name: 'Cereza Jugosa',
+          colorHex: '#A8243B',
+          finish: 'glossy',
+          hint: 'Rojo translúcido',
+          stock: 8,
+        },
+        {
+          id: `shade-${stamp}-4`,
+          name: 'Nude Café',
+          colorHex: '#A66B5B',
+          finish: 'matte',
+          hint: 'Elegante y natural',
+          stock: 8,
+        },
+      ];
+    } else if (template === 'ojos') {
+      templateRows = [
+        {
+          id: `shade-${stamp}-1`,
+          name: 'Negro Intenso',
+          colorHex: '#1C191A',
+          finish: 'matte',
+          hint: 'Mirada profunda',
+          stock: 10,
+        },
+        {
+          id: `shade-${stamp}-2`,
+          name: 'Café Oscuro (Dark Brown)',
+          colorHex: '#4A3228',
+          finish: 'matte',
+          hint: 'Acabado natural',
+          stock: 10,
+        },
+      ];
+    }
+
+    setHasVariants(true);
+    setProductFormData((prev) => {
+      const nextShades = [...prev.shades, ...templateRows];
+      return {
+        ...prev,
+        variantType: 'tono',
+        shades: nextShades,
+        stock: computeProductStock(nextShades, prev.stock),
+      };
+    });
+  };
+
+  const handleAddEmptyShadeRow = () => {
+    const newRow: ProductShade = {
+      id: `shade-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`,
+      name: '',
+      colorHex: '#E88CA5',
+      finish: 'matte',
+      hint: '',
+      stock: 5,
+      imageUrl: '',
+    };
+    setHasVariants(true);
+    setProductFormData((prev) => {
+      const nextShades = [...prev.shades, newRow];
+      return {
+        ...prev,
+        shades: nextShades,
+        stock: computeProductStock(nextShades, prev.stock),
+      };
+    });
+  };
+
+  const handleUpdateShadeRow = (
+    shadeId: string,
+    updates: Partial<ProductShade>
+  ) => {
+    setProductFormData((prev) => {
+      const nextShades = prev.shades.map((s) =>
+        s.id === shadeId ? { ...s, ...updates } : s
+      );
+      return {
+        ...prev,
+        shades: nextShades,
+        stock: computeProductStock(nextShades, prev.stock),
+      };
+    });
+  };
+
+  const handleRemoveShadeRow = (shadeId: string) => {
+    setProductFormData((prev) => {
+      const nextShades = prev.shades.filter((s) => s.id !== shadeId);
+      return {
+        ...prev,
+        shades: nextShades,
+        stock: computeProductStock(nextShades, prev.stock),
+      };
+    });
   };
 
   // Save Product (Create / Update)
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    setProductFormError(null);
+
+    if (!productFormData.imageUrl.trim()) {
+      setProductFormError('Por favor adjunta una fotografía del producto desde tu dispositivo antes de guardar.');
+      return;
+    }
+
     const benefitsList = productFormData.benefits
       .split('\n')
       .map((b) => b.trim())
       .filter((b) => b.length > 0);
 
+    const cleanedShades: ProductShade[] = hasVariants
+      ? productFormData.shades
+          .filter((s) => s.name.trim().length > 0)
+          .map((s) => {
+            const shadeObj: ProductShade = {
+              id: s.id,
+              name: s.name.trim(),
+              colorHex: s.colorHex || '#E88CA5',
+              finish: s.finish || 'matte',
+              stock: Math.max(0, Number(s.stock) || 0),
+            };
+            if (s.hint?.trim()) {
+              shadeObj.hint = s.hint.trim();
+            }
+            if (s.imageUrl?.trim()) {
+              shadeObj.imageUrl = s.imageUrl.trim();
+            }
+            return shadeObj;
+          })
+      : [];
+
+    const finalStock =
+      cleanedShades.length > 0
+        ? computeProductStock(cleanedShades, productFormData.stock)
+        : Math.max(0, Number(productFormData.stock) || 0);
+
+    setIsSavingProduct(true);
     try {
       if (editingProduct) {
         await storeService.updateProduct(editingProduct.id, {
-          name: productFormData.name,
-          shortDescription: productFormData.shortDescription,
-          description: productFormData.description,
+          name: productFormData.name.trim(),
+          shortDescription: productFormData.shortDescription.trim(),
+          description: productFormData.description.trim(),
           price: Number(productFormData.price),
           originalPrice: productFormData.originalPrice ? Number(productFormData.originalPrice) : undefined,
           category: productFormData.category,
-          stock: Number(productFormData.stock),
+          stock: finalStock,
           imageUrl: productFormData.imageUrl,
           isFeatured: productFormData.isFeatured,
           benefits: benefitsList,
-          ingredients: productFormData.ingredients,
-          howToUse: productFormData.howToUse,
+          ingredients: productFormData.ingredients.trim(),
+          howToUse: productFormData.howToUse.trim(),
+          variantType: productFormData.variantType || 'tono',
+          shades: cleanedShades,
         });
-        showFeedback(`Producto "${productFormData.name}" actualizado y guardado correctamente.`);
+        showFeedback(`Producto "${productFormData.name}" actualizado y guardado permanentemente en la base de datos.`);
       } else {
         await storeService.addProduct({
-          name: productFormData.name,
-          shortDescription: productFormData.shortDescription,
-          description: productFormData.description,
+          name: productFormData.name.trim(),
+          shortDescription: productFormData.shortDescription.trim(),
+          description: productFormData.description.trim(),
           price: Number(productFormData.price),
           originalPrice: productFormData.originalPrice ? Number(productFormData.originalPrice) : undefined,
           category: productFormData.category,
-          stock: Number(productFormData.stock),
+          stock: finalStock,
           imageUrl: productFormData.imageUrl,
           isFeatured: productFormData.isFeatured,
           benefits: benefitsList,
-          ingredients: productFormData.ingredients,
-          howToUse: productFormData.howToUse,
+          ingredients: productFormData.ingredients.trim(),
+          howToUse: productFormData.howToUse.trim(),
+          variantType: productFormData.variantType || 'tono',
+          shades: cleanedShades.length > 0 ? cleanedShades : undefined,
         });
-        showFeedback(`Producto "${productFormData.name}" creado y añadido al inventario.`);
+        showFeedback(`Producto "${productFormData.name}" creado y guardado permanentemente en la base de datos.`);
       }
 
       setIsProductModalOpen(false);
       onRefreshData();
-    } catch (e) {
-      console.error('Error saving product:', e);
+    } catch (err) {
+      console.error('Error saving product:', err);
+      setProductFormError('Ocurrió un problema al guardar en la base de datos. Verifica tu conexión o el tamaño de las fotos e inténtalo de nuevo.');
+    } finally {
+      setIsSavingProduct(false);
     }
   };
 
@@ -722,7 +1042,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                 {order.customer.fullName}
                               </span>
                               <a
-                                href={`https://wa.me/57${order.customer.phone.replace(/[^0-9]/g, '')}`}
+                                href={createWhatsAppUrl(
+                                  order.customer.phone,
+                                  `¡Hola ${order.customer.fullName}! Te escribimos de Dulzara respecto a tu pedido #${order.id}.`
+                                )}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="text-[#25D366] hover:underline flex items-center gap-1 mt-0.5"
@@ -812,11 +1135,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   className="text-xs px-3 py-1.5 rounded-xl border border-[#E8BFCB] bg-white focus:outline-none text-[#382A30]"
                 >
                   <option value="todos">Todas las categorías</option>
-                  <option value="Rostro">Rostro</option>
-                  <option value="Ojos y Cejas">Ojos y Cejas</option>
-                  <option value="Labios">Labios</option>
-                  <option value="Skincare y Cuidado">Skincare y Cuidado</option>
-                  <option value="Kits y Accesorios">Kits y Accesorios</option>
+                  {OFFICIAL_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -858,6 +1181,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                 <span className="text-[11px] text-[#382A30]/50 line-clamp-1 max-w-sm">
                                   {prod.shortDescription}
                                 </span>
+                                {prod.shades && prod.shades.length > 0 && (
+                                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                    {prod.shades.map((s) => (
+                                      <SwatchCircle
+                                        key={s.id}
+                                        colorHex={s.colorHex}
+                                        finish={s.finish}
+                                        name={`${s.name} (${s.stock} disp.)`}
+                                        stock={s.stock}
+                                        size="xs"
+                                      />
+                                    ))}
+                                    <span className="text-[10px] font-medium text-[#B9788B]">
+                                      {prod.shades.length} {getVariantLabel(prod.variantType).toLowerCase()}s
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </td>
@@ -1038,23 +1378,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       />
                     </div>
                     <p className="text-[10px] text-[#382A30]/65">
-                      ✓ Comprime automáticamente vía Canvas a WebP/JPEG ligero (Base64) para no saturar memoria.
+                      ✓ Se optimiza automáticamente desde tu dispositivo y queda guardada en la base de datos.
                     </p>
-
-                    <div className="pt-1">
-                      <label className="block text-[11px] font-medium text-[#382A30]/75 mb-1">
-                        O pegar URL pública de imagen:
-                      </label>
-                      <input
-                        type="url"
-                        value={settingsForm.heroImageUrl || ''}
-                        onChange={(e) =>
-                          setSettingsForm({ ...settingsForm, heroImageUrl: e.target.value })
-                        }
-                        placeholder="https://images.unsplash.com/..."
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none bg-white"
-                      />
-                    </div>
                   </div>
                 </div>
 
@@ -1387,7 +1712,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <div className="flex justify-between items-center">
                     <span className="text-[#382A30]/60">Teléfono:</span>
                     <a
-                      href={`https://wa.me/57${selectedOrder.customer.phone.replace(/[^0-9]/g, '')}`}
+                      href={createWhatsAppUrl(
+                        selectedOrder.customer.phone,
+                        `¡Hola ${selectedOrder.customer.fullName}! Te escribimos de Dulzara respecto a tu pedido #${selectedOrder.id}.`
+                      )}
                       target="_blank"
                       rel="noreferrer"
                       className="text-[#25D366] font-semibold flex items-center gap-1 hover:underline"
@@ -1419,7 +1747,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </h4>
                 <div className="divide-y divide-[#F7E5E9] border border-[#E8BFCB]/40 rounded-xl overflow-hidden bg-white">
                   {selectedOrder.items.map((it) => (
-                    <div key={it.productId} className="p-3 flex items-center justify-between">
+                    <div
+                      key={getCartItemKey(it.productId, it.selectedShade?.id)}
+                      className="p-3 flex items-center justify-between gap-2"
+                    >
                       <div className="flex items-center gap-2.5">
                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#F7E5E9]/40 shrink-0">
                           <BeautyImage
@@ -1430,12 +1761,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         </div>
                         <div>
                           <span className="font-medium text-[#382A30] block">{it.name}</span>
-                          <span className="text-[#382A30]/50 text-[11px]">
+                          {it.selectedShade && (
+                            <span className="inline-flex items-center gap-1.5 text-[11px] text-[#382A30]/85 bg-[#F7E5E9]/70 px-2 py-0.5 rounded-full my-0.5 border border-[#E8BFCB]/50">
+                              <SwatchCircle
+                                colorHex={it.selectedShade.colorHex}
+                                finish={it.selectedShade.finish}
+                                name={it.selectedShade.name}
+                                size="xs"
+                              />
+                              <span className="font-medium">
+                                {getVariantLabel(it.variantType)}: {it.selectedShade.name}
+                              </span>
+                            </span>
+                          )}
+                          <span className="text-[#382A30]/50 text-[11px] block">
                             {it.quantity} unid. × {formatCOP(it.price)}
                           </span>
                         </div>
                       </div>
-                      <span className="font-bold tabular-nums text-[#382A30]">
+                      <span className="font-bold tabular-nums text-[#382A30] shrink-0">
                         {formatCOP(it.price * it.quantity)}
                       </span>
                     </div>
@@ -1540,11 +1884,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     }
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8BFCB] bg-white focus:outline-none"
                   >
-                    <option value="Rostro">Rostro</option>
-                    <option value="Ojos y Cejas">Ojos y Cejas</option>
-                    <option value="Labios">Labios</option>
-                    <option value="Skincare y Cuidado">Skincare y Cuidado</option>
-                    <option value="Kits y Accesorios">Kits y Accesorios</option>
+                    {OFFICIAL_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1556,12 +1900,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     type="number"
                     required
                     min={0}
-                    value={productFormData.stock}
+                    disabled={hasVariants && productFormData.shades.length > 0}
+                    value={
+                      hasVariants && productFormData.shades.length > 0
+                        ? computeProductStock(productFormData.shades, productFormData.stock)
+                        : productFormData.stock
+                    }
                     onChange={(e) =>
                       setProductFormData({ ...productFormData, stock: Number(e.target.value) })
                     }
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none ${
+                      hasVariants && productFormData.shades.length > 0
+                        ? 'bg-[#F7E5E9]/50 text-[#382A30]/75 cursor-not-allowed font-bold'
+                        : ''
+                    }`}
                   />
+                  {hasVariants && productFormData.shades.length > 0 && (
+                    <span className="text-[10px] text-[#B9788B] font-medium block mt-0.5">
+                      ✦ Calculado automáticamente como la suma del stock de sus {productFormData.shades.length} variantes.
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -1604,6 +1962,330 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
               </div>
 
+              {/* GESTOR RÁPIDO DE TONOS, ACABADOS Y VARIACIONES (1-CLICK TEMPLATES) */}
+              <div className="p-4 rounded-2xl bg-[#FFFDF9] border border-[#E8BFCB] space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={hasVariants}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setHasVariants(checked);
+                        if (checked && productFormData.shades.length === 0) {
+                          handleAddEmptyShadeRow();
+                        }
+                      }}
+                      className="rounded text-[#B9788B] focus:ring-[#B9788B] w-4 h-4"
+                    />
+                    <span className="font-serif-brand font-semibold text-sm text-[#382A30]">
+                      ¿Este producto tiene tonos, aromas o diseños?
+                    </span>
+                  </label>
+
+                  {hasVariants && (
+                    <span className="text-[11px] font-semibold text-[#B9788B] bg-[#F7E5E9] px-2.5 py-0.5 rounded-full border border-[#E8BFCB]">
+                      Stock total variantes: {computeProductStock(productFormData.shades, 0)} unid.
+                    </span>
+                  )}
+                </div>
+
+                {hasVariants && (
+                  <div className="space-y-4 pt-2 border-t border-[#F7E5E9]">
+                    {/* Variant Type Selector */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {(
+                        [
+                          { value: 'tono', label: '🎨 Tono / Color' },
+                          { value: 'aroma', label: '🍓 Aroma / Fruta' },
+                          { value: 'estilo', label: '✨ Diseño / Estilo' },
+                        ] as { value: VariantType; label: string }[]
+                      ).map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() =>
+                            setProductFormData((prev) => ({
+                              ...prev,
+                              variantType: opt.value,
+                            }))
+                          }
+                          className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                            productFormData.variantType === opt.value
+                              ? 'bg-[#B9788B] text-white border-[#B9788B] shadow-2xs'
+                              : 'bg-white text-[#382A30] border-[#E8BFCB] hover:bg-[#F7E5E9]/60'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* 3 Botones de Plantilla Rápida de 1 Clic */}
+                    <div className="space-y-1.5">
+                      <span className="text-[11px] font-semibold text-[#382A30]/80 block">
+                        Plantillas Rápidas de 1 Clic (ahorra tiempo agregando tonos frecuentes):
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleApplyShadeTemplate('rostro')}
+                          className="px-3 py-1.5 rounded-xl bg-[#F7E5E9] hover:bg-[#E8BFCB] text-[#382A30] font-semibold text-[11px] border border-[#E8BFCB] transition-all cursor-pointer"
+                        >
+                          ⚡ Autocompletar Rostro (Polvos/Bases)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleApplyShadeTemplate('labios')}
+                          className="px-3 py-1.5 rounded-xl bg-[#F7E5E9] hover:bg-[#E8BFCB] text-[#382A30] font-semibold text-[11px] border border-[#E8BFCB] transition-all cursor-pointer"
+                        >
+                          ⚡ Autocompletar Labios/Gloss
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleApplyShadeTemplate('ojos')}
+                          className="px-3 py-1.5 rounded-xl bg-[#F7E5E9] hover:bg-[#E8BFCB] text-[#382A30] font-semibold text-[11px] border border-[#E8BFCB] transition-all cursor-pointer"
+                        >
+                          ⚡ Autocompletar Ojos/Cejas
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* List of Editable Shades */}
+                    <div className="space-y-3">
+                      {productFormData.shades.map((shade, idx) => (
+                        <div
+                          key={shade.id}
+                          className="p-3 rounded-2xl bg-white border border-[#E8BFCB]/70 shadow-2xs space-y-2.5"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <SwatchCircle
+                                colorHex={shade.colorHex}
+                                finish={shade.finish}
+                                name={shade.name || `Variante ${idx + 1}`}
+                                stock={shade.stock}
+                                size="md"
+                              />
+                              <span className="text-xs font-semibold text-[#382A30]">
+                                {getVariantLabel(productFormData.variantType)} #{idx + 1}{' '}
+                                {shade.name ? `· ${shade.name}` : ''}
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveShadeRow(shade.id)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded-lg transition-colors"
+                              title="Eliminar esta variante"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                            {/* Name */}
+                            <div className="sm:col-span-4">
+                              <label className="block text-[10px] font-semibold text-[#382A30]/70 mb-0.5">
+                                Nombre *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={shade.name}
+                                onChange={(e) =>
+                                  handleUpdateShadeRow(shade.id, { name: e.target.value })
+                                }
+                                placeholder="Ej: 02 Beige Natural"
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none text-xs"
+                              />
+                            </div>
+
+                            {/* Color Picker */}
+                            <div className="sm:col-span-2">
+                              <label className="block text-[10px] font-semibold text-[#382A30]/70 mb-0.5">
+                                Color Hex
+                              </label>
+                              <div className="flex items-center gap-1.5">
+                                <input
+                                  type="color"
+                                  value={shade.colorHex || '#E88CA5'}
+                                  onChange={(e) =>
+                                    handleUpdateShadeRow(shade.id, {
+                                      colorHex: e.target.value,
+                                    })
+                                  }
+                                  className="w-7 h-7 rounded-lg border border-[#E8BFCB] cursor-pointer p-0.5 bg-white shrink-0"
+                                />
+                                <input
+                                  type="text"
+                                  value={shade.colorHex}
+                                  onChange={(e) =>
+                                    handleUpdateShadeRow(shade.id, {
+                                      colorHex: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-1.5 py-1.5 rounded-lg border border-[#E8BFCB] text-[10px] font-mono uppercase focus:outline-none"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Finish */}
+                            <div className="sm:col-span-3">
+                              <label className="block text-[10px] font-semibold text-[#382A30]/70 mb-0.5">
+                                Textura / Acabado
+                              </label>
+                              <select
+                                value={shade.finish || 'matte'}
+                                onChange={(e) =>
+                                  handleUpdateShadeRow(shade.id, {
+                                    finish: e.target.value as ShadeFinish,
+                                  })
+                                }
+                                className="w-full px-2 py-1.5 rounded-lg border border-[#E8BFCB] bg-white text-xs focus:outline-none"
+                              >
+                                <option value="matte">Mate</option>
+                                <option value="glossy">Brillante / Gloss</option>
+                                <option value="shimmer">Iluminador / Shimmer</option>
+                              </select>
+                            </div>
+
+                            {/* Stock */}
+                            <div className="sm:col-span-3">
+                              <label className="block text-[10px] font-semibold text-[#382A30]/70 mb-0.5">
+                                Stock del tono
+                              </label>
+                              <input
+                                type="number"
+                                min={0}
+                                value={shade.stock}
+                                onChange={(e) =>
+                                  handleUpdateShadeRow(shade.id, {
+                                    stock: Math.max(0, Number(e.target.value) || 0),
+                                  })
+                                }
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none text-xs font-semibold tabular-nums"
+                              />
+                            </div>
+                          </div>
+
+                          {/* 12-Color Makeup Quick Palette + Hint + Optional Image */}
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 pt-1 items-center">
+                            <div className="sm:col-span-5">
+                              <label className="block text-[10px] font-semibold text-[#382A30]/70 mb-0.5">
+                                Micro-guía para clienta (Opcional)
+                              </label>
+                              <input
+                                type="text"
+                                value={shade.hint || ''}
+                                onChange={(e) =>
+                                  handleUpdateShadeRow(shade.id, { hint: e.target.value })
+                                }
+                                placeholder="Ej: Piel clara a media / Olor a fresa"
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none text-xs"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-7">
+                              <label className="block text-[10px] font-semibold text-[#382A30]/70 mb-0.5">
+                                Foto específica del tono (Opcional)
+                              </label>
+                              <input
+                                id={`shade-file-upload-${shade.id}`}
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleShadeImageUpload(shade.id, e)}
+                                className="hidden"
+                              />
+                              <div className="flex items-center gap-2">
+                                {shade.imageUrl ? (
+                                  <div className="w-8 h-8 rounded-lg overflow-hidden border border-[#E8BFCB] bg-[#F7E5E9]/40 shrink-0">
+                                    <BeautyImage
+                                      src={shade.imageUrl}
+                                      alt={shade.name || 'Foto del tono'}
+                                      category={productFormData.category}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                ) : null}
+
+                                <label
+                                  htmlFor={`shade-file-upload-${shade.id}`}
+                                  className="flex-1 py-1.5 px-2.5 rounded-lg bg-[#F7E5E9]/70 hover:bg-[#F7E5E9] border border-[#E8BFCB] text-[#382A30] font-semibold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                                >
+                                  {compressingShadeId === shade.id ? (
+                                    <>
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#B9788B]" />
+                                      <span>Procesando foto...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Upload className="w-3.5 h-3.5 text-[#B9788B] shrink-0" />
+                                      <span className="truncate">
+                                        {shade.imageUrl
+                                          ? 'Cambiar foto del tono'
+                                          : 'Adjuntar foto del dispositivo'}
+                                      </span>
+                                    </>
+                                  )}
+                                </label>
+
+                                {shade.imageUrl && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleUpdateShadeRow(shade.id, { imageUrl: '' })
+                                    }
+                                    className="px-2 py-1.5 rounded-lg text-[10px] font-medium text-red-600 hover:bg-red-50 border border-red-200 transition-colors shrink-0 cursor-pointer"
+                                    title="Quitar foto específica y usar la foto general del producto"
+                                  >
+                                    Quitar
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Quick 12-Color Makeup Palette */}
+                          <div className="flex items-center flex-wrap gap-1.5 pt-1">
+                            <span className="text-[10px] text-[#382A30]/60 mr-1">
+                              Paleta rápida:
+                            </span>
+                            {MAKEUP_QUICK_PALETTE.map((swatch) => (
+                              <button
+                                key={swatch.hex}
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateShadeRow(shade.id, {
+                                    colorHex: swatch.hex,
+                                  })
+                                }
+                                title={`${swatch.name} (${swatch.hex})`}
+                                className={`w-4 h-4 rounded-full border transition-transform hover:scale-125 cursor-pointer ${
+                                  shade.colorHex.toUpperCase() === swatch.hex.toUpperCase()
+                                    ? 'ring-2 ring-[#B9788B] ring-offset-1 border-white scale-110'
+                                    : 'border-black/15'
+                                }`}
+                                style={{ backgroundColor: swatch.hex }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddEmptyShadeRow}
+                      className="w-full py-2 px-3 rounded-xl border border-dashed border-[#B9788B] text-[#B9788B] hover:bg-[#F7E5E9]/50 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Añadir otro {getVariantLabel(productFormData.variantType).toLowerCase()} manualmente</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="block font-semibold text-[#382A30] mb-1">
                   Descripción Corta (Vista en catálogo) *
@@ -1636,36 +2318,60 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
 
               <div>
-                <label className="block font-semibold text-[#382A30] mb-1">
-                  URL de la Fotografía del Producto *
+                <label className="block font-semibold text-[#382A30] mb-1.5">
+                  Fotografía Principal del Producto *
                 </label>
                 <input
-                  type="url"
-                  required
-                  value={productFormData.imageUrl}
-                  onChange={(e) =>
-                    setProductFormData({ ...productFormData, imageUrl: e.target.value })
-                  }
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"
+                  id="product-main-file-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProductImageUpload}
+                  className="hidden"
                 />
-                
-                {/* Visual Preview */}
-                {productFormData.imageUrl && (
-                  <div className="mt-2 flex items-center gap-3 p-2 bg-[#F7E5E9]/30 rounded-xl border border-[#E8BFCB]/40">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
+
+                <div className="p-3.5 rounded-2xl bg-[#FFFDF9] border border-[#E8BFCB] flex flex-col sm:flex-row items-center gap-3.5">
+                  {/* Visual Preview */}
+                  <div className="w-20 h-20 rounded-xl overflow-hidden border border-[#E8BFCB]/70 bg-[#F7E5E9]/40 flex items-center justify-center shrink-0">
+                    {productFormData.imageUrl ? (
                       <BeautyImage
                         src={productFormData.imageUrl}
-                        alt="Previsualización"
+                        alt="Previsualización del producto"
                         category={productFormData.category}
                         className="w-full h-full object-cover"
                       />
-                    </div>
-                    <span className="text-[11px] text-[#382A30]/60">
-                      Previsualización de imagen con protección contra enlaces rotos
-                    </span>
+                    ) : (
+                      <div className="text-center p-2 text-[#B9788B]/70">
+                        <ImageIcon className="w-6 h-6 mx-auto" />
+                      </div>
+                    )}
                   </div>
-                )}
+
+                  <div className="flex-1 w-full space-y-1.5 text-center sm:text-left">
+                    <label
+                      htmlFor="product-main-file-upload"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#F7E5E9] hover:bg-[#ebd3d9] border border-[#E8BFCB] text-[#382A30] font-semibold text-xs cursor-pointer transition-colors shadow-2xs"
+                    >
+                      {isCompressingProductImage ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-[#B9788B]" />
+                          <span>Optimizando foto...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 text-[#B9788B]" />
+                          <span>
+                            {productFormData.imageUrl
+                              ? 'Cambiar foto desde tu dispositivo'
+                              : 'Seleccionar foto desde tu dispositivo'}
+                          </span>
+                        </>
+                      )}
+                    </label>
+                    <p className="text-[11px] text-[#382A30]/65 leading-snug">
+                      Elige una foto de tu celular o computador. Se optimiza automáticamente y queda guardada con el producto en la base de datos.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1700,6 +2406,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
               </div>
 
+              <div>
+                <label className="block font-semibold text-[#382A30] mb-1">
+                  Modo de Uso (Opcional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={productFormData.howToUse}
+                  onChange={(e) =>
+                    setProductFormData({ ...productFormData, howToUse: e.target.value })
+                  }
+                  placeholder="Aplica suavemente sobre la piel limpia con movimientos ascendentes..."
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#E8BFCB] focus:outline-none resize-none"
+                />
+              </div>
+
               <div className="flex items-center gap-2 pt-2">
                 <input
                   type="checkbox"
@@ -1715,19 +2436,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </label>
               </div>
 
+              {productFormError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                  {productFormError}
+                </div>
+              )}
+
               <div className="pt-4 border-t border-[#F7E5E9] flex justify-end gap-3">
                 <button
                   type="button"
+                  disabled={isSavingProduct}
                   onClick={() => setIsProductModalOpen(false)}
-                  className="px-4 py-2 text-xs text-[#382A30]/70 hover:text-[#382A30]"
+                  className="px-4 py-2 text-xs text-[#382A30]/70 hover:text-[#382A30] disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-[#B9788B] hover:bg-[#a6687a] text-white font-medium text-xs rounded-full transition-all shadow-xs"
+                  disabled={isSavingProduct || isCompressingProductImage || Boolean(compressingShadeId)}
+                  className="px-6 py-2.5 bg-[#B9788B] hover:bg-[#a6687a] text-white font-medium text-xs rounded-full transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
-                  {editingProduct ? 'Actualizar Producto' : 'Crear Producto'}
+                  {isSavingProduct ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Guardando en base de datos...</span>
+                    </>
+                  ) : (
+                    <span>{editingProduct ? 'Actualizar Producto' : 'Crear Producto'}</span>
+                  )}
                 </button>
               </div>
 
