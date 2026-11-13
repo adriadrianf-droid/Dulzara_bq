@@ -201,7 +201,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-[#FFFDF9]/95 backdrop-blur-md border-b border-[#E8BFCB]/40 transition-colors w-full">
       {/* Main Top Bar */}
-      <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-1 sm:gap-4 md:gap-8">
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 md:px-4 lg:px-6 xl:px-8 h-16 sm:h-18 flex items-center justify-between gap-1 sm:gap-4 md:gap-2 lg:gap-4 xl:gap-6">
         
         {/* Zone 1: Brand Wordmark with Centered Imagotipo */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
@@ -221,7 +221,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-1 sm:gap-1.5">
-                <span className="text-base sm:text-2xl font-serif-brand font-semibold tracking-wider text-[#382A30] group-hover:text-[#B9788B] transition-colors whitespace-nowrap shrink-0">
+                <span className="text-base sm:text-2xl md:text-xl lg:text-2xl font-serif-brand font-semibold tracking-wider text-[#382A30] group-hover:text-[#B9788B] transition-colors whitespace-nowrap shrink-0">
                   DULZARA
                 </span>
                 <span className="text-[#B9788B] text-xs font-serif leading-none select-none" aria-hidden="true">✦</span>
@@ -233,8 +233,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Zone 2: 5 Clean single-line official categories */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[#382A30]/80">
+        {/* Zone 2: 5 Clean single-line official categories — balanced & centered across desktop space */}
+        <nav
+          className={`hidden md:flex md:flex-1 items-center justify-center font-medium text-[#382A30]/80 min-w-0 md:px-1 lg:px-2 transition-all duration-200 ${
+            showSearchInput
+              ? 'md:gap-2 lg:gap-3.5 xl:gap-5 md:text-xs lg:text-[13px] xl:text-sm'
+              : 'md:gap-3.5 lg:gap-5 xl:gap-7 md:text-[12.5px] lg:text-sm'
+          }`}
+        >
           <button
             onClick={() => handleCategoryClick(null)}
             className={`whitespace-nowrap shrink-0 hover:text-[#B9788B] transition-colors cursor-pointer ${
@@ -257,12 +263,12 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Zone 3: Search, Admin Access, Shopping Bag, and Mobile Menu Pill */}
-        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+        <div className="flex items-center justify-end gap-1 sm:gap-3 md:gap-2 lg:gap-2.5 shrink-0">
           
           {/* Predictive Search Container with Autocomplete Dropdown */}
           <div className="static sm:relative flex items-center" ref={searchContainerRef}>
             {showSearchInput ? (
-              <div className="flex items-center bg-[#F7E5E9]/70 border border-[#E8BFCB] focus-within:border-[#B9788B] rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 w-36 min-[380px]:w-44 min-[420px]:w-52 sm:w-64 md:w-72 transition-all shadow-xs">
+              <div className="flex items-center bg-[#F7E5E9]/70 border border-[#E8BFCB] focus-within:border-[#B9788B] rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 w-36 min-[380px]:w-44 min-[420px]:w-52 sm:w-64 md:w-36 lg:w-44 xl:w-52 transition-all duration-200 shadow-xs">
                 <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B9788B] mr-1 sm:mr-1.5 shrink-0" />
                 <input
                   ref={searchInputRef}
