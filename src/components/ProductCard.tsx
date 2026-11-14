@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from
 import { ShoppingBag, Eye, Check, X } from 'lucide-react';
 import { Product, ProductShade, SelectedShade } from '../types/store';
 import { formatCOP, getVariantLabel } from '../utils/formatters';
+import { getProductSlug } from '../utils/seo';
 import { BeautyImage } from './BeautyImage';
 import { SwatchCircle } from './SwatchCircle';
 
@@ -336,7 +337,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             ref={titleRef}
             className="text-[13.5px] sm:text-[15.5px] font-serif-brand font-semibold text-[#382A30] group-hover:text-[#B9788B] transition-colors line-clamp-2 leading-[1.28]"
           >
-            {product.name}
+            <a
+              href={`/productos/${getProductSlug(product)}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onQuickView(product);
+              }}
+              className="focus:outline-none"
+            >
+              {product.name}
+            </a>
           </h3>
 
           {/* Short Description — Dynamically adapts line budget to available vertical space on mobile & desktop */}

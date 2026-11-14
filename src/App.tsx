@@ -19,6 +19,13 @@ import {
   getCartItemKey,
   getVariantLabel,
 } from './utils/formatters';
+import {
+  getProductSlug,
+  getCategorySlug,
+  parseStorePath,
+  updatePageSEO,
+  CATEGORY_SEO_MAP,
+} from './utils/seo';
 
 import { Navbar } from './components/Navbar';
 import { HeroBanner } from './components/HeroBanner';
@@ -74,6 +81,33 @@ export default function App() {
   // Toast / notification feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
+  const hasResolvedInitialRouteRef = useRef<boolean>(false);
+
+  const handleSelectCategory = (category: string | null) => {
+    setActiveCategory(category);
+    setSelectedProduct(null);
+    const nextPath = category ? `/categoria/${getCategorySlug(category)}` : '/';
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({ category }, '', nextPath);
+    }
+  };
+
+  const handleSelectProduct = (product: Product | null) => {
+    setSelectedProduct(product);
+    if (product) {
+      const nextPath = `/productos/${getProductSlug(product)}`;
+      if (window.location.pathname !== nextPath) {
+        window.history.pushState({ productSlug: getProductSlug(product) }, '', nextPath);
+      }
+    } else {
+      const fallbackPath = activeCategory
+        ? `/categoria/${getCategorySlug(activeCategory)}`
+        : '/';
+      if (window.location.pathname !== fallbackPath) {
+        window.history.pushState({ category: activeCategory }, '', fallbackPath);
+      }
+    }
+  };
 
   // Real-time synchronization with Firestore & Favicon enforcement
   useEffect(() => {
@@ -119,9 +153,19 @@ export default function App() {
     };
   }, []);
 
-  // Synchronize open ProductDetailModal & Cart items with live product updates from Firestore
+  // Synchronize open ProductDetailModal, initial URL route (/productos/:slug or /categoria/:slug), & Cart items with live product updates
   useEffect(() => {
     if (products.length === 0) return;
+
+    if (!hasResolvedInitialRouteRef.current) {
+      hasResolvedInitialRouteRef.current = true;
+      const initialRoute = parseStorePath(window.location.pathname, products);
+      if (initialRoute.product) {
+        setSelectedProduct(initialRoute.product);
+      } else if (initialRoute.category) {
+        setActiveCategory(initialRoute.category);
+      }
+    }
 
     setSelectedProduct((prev) => {
       if (!prev) return null;
@@ -188,6 +232,27 @@ export default function App() {
       return changed ? synced : prev;
     });
   }, [products]);
+
+  // Handle browser Back/Forward navigation for /productos/:slug and /categoria/:slug
+  useEffect(() => {
+    const handlePopState = () => {
+      const route = parseStorePath(window.location.pathname, products);
+      setSelectedProduct(route.product);
+      setActiveCategory(route.product ? activeCategory : route.category);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [products, activeCategory]);
+
+  // Keep page <title>, <meta name="description">, canonical URL, and Schema.org Product/Offer JSON-LD updated
+  useEffect(() => {
+    updatePageSEO({
+      selectedProduct,
+      activeCategory,
+      products,
+      settings,
+    });
+  }, [selectedProduct, activeCategory, products, settings]);
 
   const loadData = () => {
     setProducts(storeService.getProducts());
@@ -365,7 +430,7 @@ export default function App() {
   // Search submission: searches globally across the whole store by resetting activeCategory to null
   const handleSearchSubmit = (query: string) => {
     // Automatically search entire catalog so products in any category are shown immediately
-    setActiveCategory(null);
+    handleSelectCategory(null);
     setSearchQuery(query);
     setTimeout(() => {
       const el = document.getElementById('catalogo') || document.getElementById('grid-productos');
@@ -455,7 +520,7 @@ export default function App() {
         }}
         isAdminLoggedIn={!!adminUser}
         onNavigateCategory={(cat) => {
-          setActiveCategory(cat);
+          handleSelectCategory(cat);
           setSearchQuery('');
           setTimeout(() => {
             const catalogEl = document.getElementById('catalogo');
@@ -468,7 +533,7 @@ export default function App() {
         onSearchChange={setSearchQuery}
         searchQuery={searchQuery}
         products={products}
-        onSelectProduct={setSelectedProduct}
+        onSelectProduct={handleSelectProduct}
         onSearchSubmit={handleSearchSubmit}
       />
 
@@ -547,11 +612,16 @@ export default function App() {
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
               <div>
                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.08em] text-[#B9788B]">
-                  Catálogo Oficial
+                  Catálogo Oficial · Barranquilla y toda Colombia
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-serif-brand font-semibold text-[#382A30] leading-tight mt-0.5">
                   {activeCategory ? `Colección: ${activeCategory}` : 'Explora Todos los Productos'}
                 </h2>
+                {activeCategory && CATEGORY_SEO_MAP[activeCategory] && (
+                  <p className="text-xs text-[#382A30]/70 mt-1 max-w-2xl">
+                    {CATEGORY_SEO_MAP[activeCategory].subtitle}
+                  </p>
+                )}
               </div>
 
               {/* Controls: Cohesive Featured pill button & Sort selector */}
@@ -592,7 +662,7 @@ export default function App() {
             {/* Segmented Category Filter Bar */}
             <CategoryFilter
               activeCategory={activeCategory}
-              onSelectCategory={setActiveCategory}
+              onSelectCategory={handleSelectCategory}
               totalProductsCount={searchQuery.trim() ? allSearchMatches.length : products.length}
               categoryCounts={categoryCounts}
             />
@@ -623,7 +693,7 @@ export default function App() {
                   <div className="flex items-center gap-2">
                     {activeCategory && allSearchMatches.length > sortedProducts.length && (
                       <button
-                        onClick={() => setActiveCategory(null)}
+                        onClick={() => handleSelectCategory(null)}
                         className="px-2.5 py-1 bg-white hover:bg-[#F7E5E9] text-[#B9788B] font-semibold rounded-lg border border-[#E8BFCB] transition-colors cursor-pointer text-[11px]"
                       >
                         Ver todos ({allSearchMatches.length})
@@ -632,7 +702,7 @@ export default function App() {
                     <button
                       onClick={() => {
                         setSearchQuery('');
-                        setActiveCategory(null);
+                        handleSelectCategory(null);
                       }}
                       className="text-[#B9788B] font-semibold hover:underline cursor-pointer text-[11px]"
                     >
@@ -650,7 +720,7 @@ export default function App() {
                     {Object.entries(matchesByCategory).map(([cat, count]) => (
                       <button
                         key={cat}
-                        onClick={() => setActiveCategory(cat)}
+                        onClick={() => handleSelectCategory(cat)}
                         className="px-2.5 py-0.5 bg-[#B9788B] text-white rounded-full font-medium hover:bg-[#a6687a] transition-all cursor-pointer shadow-2xs"
                       >
                         {cat} ({count})
@@ -683,7 +753,7 @@ export default function App() {
                     {Object.entries(matchesByCategory).map(([cat, count]) => (
                       <button
                         key={cat}
-                        onClick={() => setActiveCategory(cat)}
+                        onClick={() => handleSelectCategory(cat)}
                         className="px-3.5 py-1.5 bg-[#F7E5E9] hover:bg-[#E8BFCB] text-[#382A30] text-xs font-semibold rounded-xl border border-[#E8BFCB] transition-colors cursor-pointer flex items-center gap-1.5"
                       >
                         <span>{cat}</span>
@@ -696,7 +766,7 @@ export default function App() {
 
                   <div className="pt-3">
                     <button
-                      onClick={() => setActiveCategory(null)}
+                      onClick={() => handleSelectCategory(null)}
                       className="px-5 py-2.5 bg-[#B9788B] text-white text-xs font-semibold rounded-full hover:bg-[#a6687a] transition-all shadow-xs cursor-pointer"
                     >
                       Ver todos los {allSearchMatches.length} productos
@@ -713,7 +783,7 @@ export default function App() {
                   </p>
                   <button
                     onClick={() => {
-                      setActiveCategory(null);
+                      handleSelectCategory(null);
                       setSearchQuery('');
                       setOnlyFeatured(false);
                       setSortBy('all');
@@ -732,7 +802,7 @@ export default function App() {
                   key={product.id}
                   product={product}
                   onAddToCart={(p, shade) => handleAddToCart(p, 1, shade)}
-                  onQuickView={setSelectedProduct}
+                  onQuickView={handleSelectProduct}
                   isItemInCart={cartItems.some((ci) => ci.product.id === product.id)}
                 />
               ))}
@@ -797,13 +867,13 @@ export default function App() {
             setIsAdminLoginOpen(true);
           }
         }}
-        onFilterCategory={setActiveCategory}
+        onFilterCategory={handleSelectCategory}
       />
 
       {/* Modals & Drawers */}
       <ProductDetailModal
         product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
+        onClose={() => handleSelectProduct(null)}
         onAddToCart={handleAddToCart}
         whatsappNumber={settings.whatsappNumber}
       />

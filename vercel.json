@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/productos/:slug*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/producto/:slug*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/categoria/:slug*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/categorias/:slug*",
+      "destination": "/index.html"
+    }
+  ]
+}

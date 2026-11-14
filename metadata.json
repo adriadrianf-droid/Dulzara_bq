@@ -1,6 +1,6 @@
 {
   "name": "Dulzara - Tienda de Maquillaje y Cuidado Personal",
-  "description": "Tienda virtual profesional de maquillaje, belleza y cuidado personal en Colombia con catálogo, carrito dinámico, checkout con WhatsApp y panel administrativo.",
+  "description": "Descubre Dulzara, tu tienda de maquillaje, productos de belleza y cuidado personal en Barranquilla con envíos a toda Colombia. Explora nuestro catálogo y realiza tus pedidos fácilmente por WhatsApp.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

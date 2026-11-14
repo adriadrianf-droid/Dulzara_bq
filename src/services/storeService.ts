@@ -718,9 +718,18 @@ class StoreService {
       ? computeProductStock(mergedShades, rawStock)
       : Math.max(0, Number(rawStock) || 0);
 
+    const nextName = updates.name ? updates.name.trim() : current.name;
+    const fallbackSlug = nextName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
     const updatedRaw: Product = {
       ...current,
       ...updates,
+      slug: current.slug || updates.slug || fallbackSlug,
       variantType: updates.variantType || current.variantType || 'tono',
       shades: hasShades ? mergedShades : [],
       stock: computedStock,
