@@ -87,25 +87,33 @@ export default function App() {
     setActiveCategory(category);
     setSelectedProduct(null);
     const nextPath = category ? `/categoria/${getCategorySlug(category)}` : '/';
-    if (window.location.pathname !== nextPath) {
-      window.history.pushState({ category }, '', nextPath);
+    try {
+      if (window.location.pathname !== nextPath) {
+        window.history.pushState({ category }, '', nextPath);
+      }
+    } catch {
+      // Ignored in restricted iframe contexts
     }
   };
 
   const handleSelectProduct = (product: Product | null) => {
     setSelectedProduct(product);
-    if (product) {
-      const nextPath = `/productos/${getProductSlug(product)}`;
-      if (window.location.pathname !== nextPath) {
-        window.history.pushState({ productSlug: getProductSlug(product) }, '', nextPath);
+    try {
+      if (product) {
+        const nextPath = `/productos/${getProductSlug(product)}`;
+        if (window.location.pathname !== nextPath) {
+          window.history.pushState({ productSlug: getProductSlug(product) }, '', nextPath);
+        }
+      } else {
+        const fallbackPath = activeCategory
+          ? `/categoria/${getCategorySlug(activeCategory)}`
+          : '/';
+        if (window.location.pathname !== fallbackPath) {
+          window.history.pushState({ category: activeCategory }, '', fallbackPath);
+        }
       }
-    } else {
-      const fallbackPath = activeCategory
-        ? `/categoria/${getCategorySlug(activeCategory)}`
-        : '/';
-      if (window.location.pathname !== fallbackPath) {
-        window.history.pushState({ category: activeCategory }, '', fallbackPath);
-      }
+    } catch {
+      // Ignored in restricted iframe contexts
     }
   };
 
@@ -158,19 +166,25 @@ export default function App() {
     if (products.length === 0) return;
 
     if (!hasResolvedInitialRouteRef.current) {
-      hasResolvedInitialRouteRef.current = true;
-      const initialRoute = parseStorePath(window.location.pathname, products);
-      if (initialRoute.product) {
-        setSelectedProduct(initialRoute.product);
-      } else if (initialRoute.category) {
-        setActiveCategory(initialRoute.category);
+      const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+      if (currentPath === '/') {
+        hasResolvedInitialRouteRef.current = true;
+      } else {
+        const initialRoute = parseStorePath(currentPath, products);
+        if (initialRoute.product) {
+          hasResolvedInitialRouteRef.current = true;
+          setSelectedProduct(initialRoute.product);
+        } else if (initialRoute.category) {
+          hasResolvedInitialRouteRef.current = true;
+          setActiveCategory(initialRoute.category);
+        }
       }
+    } else {
+      setSelectedProduct((prev) => {
+        if (!prev) return null;
+        return products.find((p) => p.id === prev.id) || null;
+      });
     }
-
-    setSelectedProduct((prev) => {
-      if (!prev) return null;
-      return products.find((p) => p.id === prev.id) || null;
-    });
 
     setCartItems((prev) => {
       if (prev.length === 0) return prev;
