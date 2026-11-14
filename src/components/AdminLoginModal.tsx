@@ -26,8 +26,10 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     setIsLoading(true);
     try {
       const user = await authService.loginWithGoogle();
-      onLoginSuccess(user);
-      onClose();
+      if (user) {
+        onLoginSuccess(user);
+        onClose();
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al autenticar con Google.';
       setError(msg);

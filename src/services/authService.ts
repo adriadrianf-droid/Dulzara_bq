@@ -102,9 +102,10 @@ class AuthService {
   }
 
   /**
-   * One-Click Real Google Sign-In for Admin with authorization check
+   * One-Click Real Google Sign-In for Admin with authorization check.
+   * Returns null if the user closes/cancels the popup window.
    */
-  async loginWithGoogle(): Promise<AdminUser> {
+  async loginWithGoogle(): Promise<AdminUser | null> {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
@@ -143,7 +144,23 @@ class AuthService {
       this.notifyListeners();
       return adminUser;
     } catch (err: unknown) {
-      console.error('Google Sign In Error:', err);
+      const code = (err as { code?: string })?.code;
+      if (
+        code === 'auth/popup-closed-by-user' ||
+        code === 'auth/cancelled-popup-request'
+      ) {
+        return null;
+      }
+      if (code === 'auth/popup-blocked') {
+        throw new Error(
+          'El navegador bloqueó la ventana emergente de Google. Por favor permite ventanas emergentes o ingresa con tu correo y contraseña.'
+        );
+      }
+      if (code === 'auth/unauthorized-domain') {
+        throw new Error(
+          'Este dominio no está autorizado para Google Sign-In. Puedes ingresar directamente con tu correo y contraseña de administrador.'
+        );
+      }
       const msg = err instanceof Error ? err.message : 'Error al autenticar con Google.';
       throw new Error(msg);
     }
@@ -221,7 +238,6 @@ class AuthService {
       this.notifyListeners();
       return adminUser;
     } catch (err: unknown) {
-      console.error('Email Sign In Error:', err);
       const code = (err as { code?: string })?.code;
       const message = (err as { message?: string })?.message;
       if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {

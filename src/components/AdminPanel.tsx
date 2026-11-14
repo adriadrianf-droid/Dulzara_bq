@@ -63,6 +63,33 @@ const MAKEUP_QUICK_PALETTE: { name: string; hex: string }[] = [
   { name: 'Negro Intenso', hex: '#1C191A' },
 ];
 
+/**
+ * Convierte un texto de precio en pesos colombianos (donde el punto '.' separa miles
+ * y no se usan centavos) a un número entero puro y seguro para cálculos y base de datos.
+ */
+const parseCOPInteger = (raw: string | number | undefined | null): number => {
+  if (typeof raw === 'number') {
+    return Number.isFinite(raw) ? Math.max(0, Math.round(raw)) : 0;
+  }
+  const digitsOnly = String(raw ?? '').replace(/\D+/g, '');
+  if (!digitsOnly) return 0;
+  const parsed = parseInt(digitsOnly, 10);
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+};
+
+/**
+ * Formatea un valor numérico o cadena de dígitos con puntos separadores de miles (ej: 45000 -> "45.000").
+ * Si está vacío, devuelve "" para permitir borrar todo el contenido sin forzar un 0.
+ */
+const formatCOPInputString = (raw: string | number | undefined | null): string => {
+  if (raw === undefined || raw === null || raw === '') return '';
+  const digitsOnly = String(raw).replace(/\D+/g, '');
+  if (!digitsOnly) return '';
+  const parsed = parseInt(digitsOnly, 10);
+  if (!Number.isFinite(parsed)) return '';
+  return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(parsed);
+};
+
 interface AdminPanelProps {
   user: AdminUser;
   onLogout: () => void;
@@ -101,8 +128,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     name: string;
     shortDescription: string;
     description: string;
-    price: number;
-    originalPrice?: number;
+    price: string;
+    originalPrice: string;
     category: Product['category'];
     stock: number;
     imageUrl: string;
@@ -116,8 +143,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     name: '',
     shortDescription: '',
     description: '',
-    price: 35000,
-    originalPrice: undefined,
+    price: '',
+    originalPrice: '',
     category: 'Rostro',
     stock: 10,
     imageUrl: '',
@@ -381,8 +408,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       name: '',
       shortDescription: '',
       description: '',
-      price: 45000,
-      originalPrice: undefined,
+      price: '',
+      originalPrice: '',
       category: 'Rostro',
       stock: 15,
       imageUrl: '',
@@ -406,8 +433,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       name: prod.name,
       shortDescription: prod.shortDescription,
       description: prod.description,
-      price: prod.price,
-      originalPrice: prod.originalPrice,
+      price: prod.price > 0 ? formatCOPInputString(prod.price) : '',
+      originalPrice: prod.originalPrice && prod.originalPrice > 0 ? formatCOPInputString(prod.originalPrice) : '',
       category: prod.category,
       stock: prod.stock,
       imageUrl: prod.imageUrl,
@@ -618,6 +645,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         ? computeProductStock(cleanedShades, productFormData.stock)
         : Math.max(0, Number(productFormData.stock) || 0);
 
+    const numericPrice = parseCOPInteger(productFormData.price);
+    const numericOriginalPrice = parseCOPInteger(productFormData.originalPrice);
+
     setIsSavingProduct(true);
     try {
       if (editingProduct) {
@@ -625,8 +655,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           name: productFormData.name.trim(),
           shortDescription: productFormData.shortDescription.trim(),
           description: productFormData.description.trim(),
-          price: Number(productFormData.price),
-          originalPrice: productFormData.originalPrice ? Number(productFormData.originalPrice) : undefined,
+          price: numericPrice,
+          originalPrice: numericOriginalPrice > 0 ? numericOriginalPrice : undefined,
           category: productFormData.category,
           stock: finalStock,
           imageUrl: productFormData.imageUrl,
@@ -643,8 +673,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           name: productFormData.name.trim(),
           shortDescription: productFormData.shortDescription.trim(),
           description: productFormData.description.trim(),
-          price: Number(productFormData.price),
-          originalPrice: productFormData.originalPrice ? Number(productFormData.originalPrice) : undefined,
+          price: numericPrice,
+          originalPrice: numericOriginalPrice > 0 ? numericOriginalPrice : undefined,
           category: productFormData.category,
           stock: finalStock,
           imageUrl: productFormData.imageUrl,
@@ -1926,17 +1956,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-semibold text-[#382A30] mb-1">
-                    Precio de Venta ($) *
+                    Precio de Venta ($)
                   </label>
                   <input
-                    type="number"
-                    required
-                    min={1000}
-                    step={1000}
+                    type="text"
+                    inputMode="numeric"
                     value={productFormData.price}
                     onChange={(e) =>
-                      setProductFormData({ ...productFormData, price: Number(e.target.value) })
+                      setProductFormData({
+                        ...productFormData,
+                        price: e.target.value.replace(/[^\d.]/g, ''),
+                      })
                     }
+                    onBlur={() =>
+                      setProductFormData((prev) => ({
+                        ...prev,
+                        price: formatCOPInputString(prev.price),
+                      }))
+                    }
+                    placeholder="Ej: 45.000"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"
                   />
                 </div>
@@ -1946,17 +1984,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     Precio Original / Antes (Opcional para descuento)
                   </label>
                   <input
-                    type="number"
-                    min={0}
-                    step={1000}
-                    value={productFormData.originalPrice || ''}
+                    type="text"
+                    inputMode="numeric"
+                    value={productFormData.originalPrice}
                     onChange={(e) =>
                       setProductFormData({
                         ...productFormData,
-                        originalPrice: e.target.value ? Number(e.target.value) : undefined,
+                        originalPrice: e.target.value.replace(/[^\d.]/g, ''),
                       })
                     }
-                    placeholder="Ej: 55000"
+                    onBlur={() =>
+                      setProductFormData((prev) => ({
+                        ...prev,
+                        originalPrice: formatCOPInputString(prev.originalPrice),
+                      }))
+                    }
+                    placeholder="Ej: 55.000"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"
                   />
                 </div>
