@@ -231,18 +231,38 @@ export function updatePageSEO(params: {
   setMetaTag('property', 'og:description', description);
   setMetaTag('property', 'og:url', canonicalUrl);
   setMetaTag('property', 'og:site_name', 'Dulzara');
+  setMetaTag('name', 'application-name', 'Dulzara');
   setMetaTag('name', 'twitter:card', 'summary_large_image');
   setMetaTag('name', 'twitter:title', title);
   setMetaTag('name', 'twitter:description', description);
   setCanonicalUrl(canonicalUrl);
 
-  // Build Schema.org JSON-LD (Store + Product/Offer or ItemList, strictly without fake ratings/reviews)
+  // Build Schema.org JSON-LD (WebSite for Site Name in Google Search + OnlineStore + Product/Offer or ItemList)
+  const websiteGraphNode = {
+    '@type': 'WebSite',
+    '@id': `${CANONICAL_ORIGIN}/#website`,
+    name: 'Dulzara',
+    alternateName: [
+      'Dulzara Beauty',
+      'Dulzara Belleza y Cuidado',
+      'dulzara.vercel.app',
+    ],
+    url: `${CANONICAL_ORIGIN}/`,
+  };
+
   const storeGraphNode = {
     '@type': 'OnlineStore',
     '@id': `${CANONICAL_ORIGIN}/#store`,
     name: 'Dulzara',
     alternateName: 'Dulzara Belleza y Cuidado Personal',
     url: `${CANONICAL_ORIGIN}/`,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${CANONICAL_ORIGIN}/favicon-512x512.png`,
+      width: 512,
+      height: 512,
+    },
+    image: `${CANONICAL_ORIGIN}/favicon-512x512.png`,
     description: HOME_SEO.description,
     currenciesAccepted: 'COP',
     priceRange: '$$',
@@ -261,7 +281,7 @@ export function updatePageSEO(params: {
       : ['https://instagram.com/dulzara_bq'],
   };
 
-  const graph: unknown[] = [storeGraphNode];
+  const graph: unknown[] = [websiteGraphNode, storeGraphNode];
 
   if (selectedProduct) {
     graph.push({
