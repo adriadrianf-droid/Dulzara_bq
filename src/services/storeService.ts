@@ -17,6 +17,22 @@ import {
   SelectedShade,
   ProductShade,
 } from '../types/store';
+import { INITIAL_PRODUCTS } from '../data/catalogSnapshot';
+
+export { INITIAL_PRODUCTS };
+
+const LEGACY_DELETED_IDS = new Set([
+  'prod-001',
+  'prod-002',
+  'prod-003',
+  'prod-004',
+  'prod-005',
+  'prod-006',
+  'prod-007',
+  'prod-008',
+  'prod-009',
+  'prod-010',
+]);
 
 export function computeProductStock(
   shades?: ProductShade[],
@@ -32,16 +48,16 @@ export const DEFAULT_HERO_SETTINGS = {
   heroKicker: '✦ BIENVENIDA A TU LUGAR FELIZ',
   heroTitle: 'Brilla a tu manera, nosotros ponemos la magia.',
   heroSubtitle: 'Maquillaje y cuidado personal elegido con amor para resaltar lo linda que eres. Arma tu bolsita a tu ritmo y pide fácil por WhatsApp.',
-  heroBadgeText: 'Hecho con amor para ti 💕',
+  heroBadgeText: '',
   heroButtonText: 'Explorar Catálogo ✦',
-  heroImageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1000&q=80',
+  heroImageUrl: '/assets/aistudio/dulzara_hero_current.jpg',
 };
 
 export const DEFAULT_SETTINGS: StoreSettings = {
   brandName: 'DULZARA',
-  whatsappNumber: '573124567890',
-  freeShippingThreshold: 120000,
-  standardShippingCost: 12000,
+  whatsappNumber: '573122568522',
+  freeShippingThreshold: 80000,
+  standardShippingCost: 10000,
   instagramHandle: '@dulzara_bq',
   contactEmail: 'contacto@dulzara.com',
   cityOrigin: 'Barranquilla Atlántico, Colombia',
@@ -70,328 +86,6 @@ export function normalizeCategory(cat: string): string {
       return cat || 'Rostro';
   }
 }
-
-export const INITIAL_PRODUCTS: Product[] = [
-  {
-    id: 'prod-001',
-    name: 'Suero Iluminador Niacinamida 10% & Rosa Damascena',
-    slug: 'suero-iluminador-niacinamida-rosa',
-    shortDescription: 'Unifica el tono, minimiza poros y da brillo natural.',
-    description: 'Nuestra fórmula estrella combina Niacinamida pura al 10% con extracto orgánico destilado de Rosa Damascena y Zinc PCA. Ayuda a calmar rojeces, suavizar la textura de la piel y devolver el brillo saludable desde la primera semana de uso.',
-    price: 58000,
-    originalPrice: 72000,
-    category: 'Skincare y Cuidado',
-    stock: 24,
-    imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80',
-    isFeatured: true,
-    benefits: [
-      'Disminuye manchas y rojeces superficiales',
-      'Regula la producción de sebo sin resecar',
-      'Textura acuosa de rápida absorción',
-      'Apta para todo tipo de piel, incluso sensible'
-    ],
-    ingredients: 'Agua de Rosa Damascena, Niacinamida (10%), Glicerina vegetal, Zinc PCA, Ácido Hialurónico vegetal, Alantoína, Extracto de Camomila.',
-    howToUse: 'Aplica 3 a 4 gotas en rostro limpio y seco mañana y noche antes de tu crema hidratante. Masajea suavemente con movimientos ascendentes.',
-    createdAt: '2026-01-10T10:00:00.000Z',
-    updatedAt: '2026-01-10T10:00:00.000Z',
-  },
-  {
-    id: 'prod-002',
-    name: 'Labial Velvet Matte "Rosa Salvaje"',
-    slug: 'labial-velvet-matte-rosa-salvaje',
-    shortDescription: 'Acabado mate aterciopelado con karité hidratante.',
-    description: 'Un tono rosa empolvado sofisticado y versátil para cualquier ocasión. Su textura cremosa se desliza con facilidad y fija un color uniforme que no reseca los labios gracias a su infusión de manteca de karité y vitamina E.',
-    price: 36000,
-    originalPrice: 42000,
-    category: 'Labios',
-    stock: 18,
-    imageUrl: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=800&q=80',
-    isFeatured: true,
-    benefits: [
-      'Duración hasta por 8 horas sin transferencias severas',
-      'Pigmento ultra saturado de una sola pasada',
-      'No cuartea ni acentúa líneas de expresión',
-      'Libre de parabenos y no testeado en animales'
-    ],
-    ingredients: 'Dimethicone, Isododecane, Manteca de Karité, Cera de Candelilla, Vitamina E (Tocoferol), Aceite de Jojoba, Pigmentos minerales certificados.',
-    howToUse: 'Delinea suavemente el contorno de los labios y rellena desde el centro hacia las comisuras. Espera 60 segundos para secado óptimo.',
-    createdAt: '2026-01-12T10:00:00.000Z',
-    updatedAt: '2026-01-12T10:00:00.000Z',
-  },
-  {
-    id: 'prod-003',
-    name: 'Paleta de Sombras "Dulzara Rose Gold" (12 Tonos)',
-    slug: 'paleta-sombras-dulzara-rose-gold',
-    shortDescription: '12 sombras entre mates sedosos y destellos rosa.',
-    description: 'Inspirada en los atardeceres andinos, esta paleta ofrece una transición armoniosa desde tonos nude neutros hasta bronces cálidos y rosas satinados. Fórmula micro-pulverizada de alta adherencia y fácil difuminado.',
-    price: 78000,
-    originalPrice: 95000,
-    category: 'Ojos y Cejas',
-    stock: 14,
-    imageUrl: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=800&q=80',
-    isFeatured: true,
-    benefits: [
-      '6 tonos mates mantecosos + 6 shimmers reflectivos',
-      'No produce caída de pigmento bajo el ojo (zero fall-out)',
-      'Espejo de alta definición incorporado en empaque magnético',
-      'Alta fijación con o sin primer'
-    ],
-    ingredients: 'Talco micronizado, Mica tratada, Estearato de magnesio, Dimeticona, Sílice, Aceite de semilla de uva, Pigmentos perlados.',
-    howToUse: 'Aplica el tono neutro como base en el párpado. Usa tonos de transición en la cuenca y deposita los shimmers con la yema del dedo o brocha plana para máximo destello.',
-    createdAt: '2026-01-15T10:00:00.000Z',
-    updatedAt: '2026-01-15T10:00:00.000Z',
-  },
-  {
-    id: 'prod-004',
-    name: 'Crema Hidratante Facial "Hydra Glow" con Péptidos',
-    slug: 'crema-hidratante-facial-hydra-glow',
-    shortDescription: 'Gel sedoso con hidratación profunda por 48 horas.',
-    description: 'Enriquecida con complejo de tripéptidos, centella asiática y escualano vegetal. Restaura la barrera cutánea sin tapar los poros, dejando un velo de frescura que prepara la piel perfectamente antes del maquillaje.',
-    price: 64000,
-    category: 'Skincare y Cuidado',
-    stock: 22,
-    imageUrl: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80',
-    isFeatured: true,
-    benefits: [
-      'Sensación ligera tipo sorbete refrescante',
-      'Refuerza la elasticidad y barrera lipídica',
-      'Excelente primer natural de maquillaje',
-      'Fórmula no comedogénica'
-    ],
-    ingredients: 'Agua purificada, Escualano de oliva, Péptidos de cobre, Centella Asiática, Ácido Hialurónico multimolecular, Pantenol (Provitamina B5).',
-    howToUse: 'Toma la cantidad del tamaño de una moneda y distribuye con palmaditas suaves sobre rostro, cuello y escote.',
-    createdAt: '2026-01-18T10:00:00.000Z',
-    updatedAt: '2026-01-18T10:00:00.000Z',
-  },
-  {
-    id: 'prod-005',
-    name: 'Iluminador Líquido "Luz de Luna" Shimmer Glow',
-    slug: 'iluminador-liquido-luz-de-luna-shimmer',
-    shortDescription: 'Iluminador fluido con micro-perlas de brillo húmedo.',
-    description: 'Un iluminador sedoso de efecto cristalino que se funde con tu piel sin marcar textura. Sus pigmentos perlados ultrafinos capturan la luz en pómulos, arco de cupido y clavículas con un acabado luminoso de larga duración.',
-    price: 38000,
-    category: 'Rostro',
-    stock: 30,
-    imageUrl: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80',
-    isFeatured: true,
-    variantType: 'tono',
-    shades: [
-      {
-        id: 'shade-shimmer-01',
-        name: '01 Perla Champagne',
-        colorHex: '#F7E3D4',
-        finish: 'shimmer',
-        hint: 'Dorado perlado',
-        stock: 11,
-      },
-      {
-        id: 'shade-shimmer-02',
-        name: '02 Rosa Cuarzo',
-        colorHex: '#EBB3C0',
-        finish: 'shimmer',
-        hint: 'Brillo rosado',
-        stock: 10,
-      },
-      {
-        id: 'shade-shimmer-03',
-        name: '03 Bronce Sol',
-        colorHex: '#C98E70',
-        finish: 'shimmer',
-        hint: 'Bronce cálido',
-        stock: 9,
-      },
-    ],
-    benefits: [
-      'Micro-destellos multidimensionales sin partículas gruesas',
-      'Se difumina fácil con yema de los dedos, esponja o brocha',
-      'No levanta la base ni parchea polvos',
-      'Enriquecido con aceite de rosa mosqueta y vitamina E'
-    ],
-    ingredients: 'Isododecano, Mica perlada, Poligliceril-2 Triisostearato, Aceite de Rosa Mosqueta virgen, Sílice, Tocoferol.',
-    howToUse: 'Coloca 1 a 2 punticos en la parte alta del pómulo, punta de la nariz y arco de cupido; difumina con toques suaves.',
-    createdAt: '2026-01-20T10:00:00.000Z',
-    updatedAt: '2026-01-20T10:00:00.000Z',
-  },
-  {
-    id: 'prod-006',
-    name: 'Tónico Botánico de Rosas & Hamamelis',
-    slug: 'tonico-botanico-rosas-hamamelis',
-    shortDescription: 'Bruma de rosas sin alcohol que equilibra y refresca.',
-    description: 'Destilado artesanal de pétalos frescos de rosa y agua floral de hamamelis sin alcohol. Ayuda a cerrar visiblemente los poros y prepara la piel para absorber mejor los sueros y tratamientos posteriores.',
-    price: 32000,
-    originalPrice: 38000,
-    category: 'Skincare y Cuidado',
-    stock: 19,
-    imageUrl: 'https://images.unsplash.com/photo-1608248597359-002d287ee3b6?auto=format&fit=crop&w=800&q=80',
-    isFeatured: false,
-    benefits: [
-      '100% libre de alcohol y fragancias sintéticas',
-      'Calma irritaciones después de la limpieza o afeitado',
-      'Ideal como bruma hidratante durante el día de trabajo',
-      'Aroma natural floral relajante'
-    ],
-    ingredients: 'Hidrolato puro de Rosa Centifolia, Agua de Hamamelis virginiana, Extracto de Pepino, Glicerina, Ácido Cítrico suave.',
-    howToUse: 'Rocía a 20 cm del rostro con los ojos cerrados o aplica con un disco de algodón suave antes del suero.',
-    createdAt: '2026-01-22T10:00:00.000Z',
-    updatedAt: '2026-01-22T10:00:00.000Z',
-  },
-  {
-    id: 'prod-007',
-    name: 'Polvo Compacto Micropulverizado "Velvet Skin" Matte',
-    slug: 'polvo-compacto-micropulverizado-velvet-skin',
-    shortDescription: 'Sella el maquillaje y matifica por 12h sin resecar.',
-    description: 'Fórmula ultra fina resistente a la humedad y al calor tropical. Matifica instantáneamente la zona T sin dejar sensación pesada ni efecto acartonado, adaptándose con suavidad a cada subtono de piel.',
-    price: 42000,
-    category: 'Rostro',
-    stock: 25,
-    imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
-    isFeatured: true,
-    variantType: 'tono',
-    shades: [
-      {
-        id: 'shade-matte-01',
-        name: '01 Claro Marfil',
-        colorHex: '#F3DFC8',
-        finish: 'matte',
-        hint: 'Piel clara',
-        stock: 7,
-      },
-      {
-        id: 'shade-matte-02',
-        name: '02 Beige Natural',
-        colorHex: '#E5C29F',
-        finish: 'matte',
-        hint: 'Clara a media',
-        stock: 8,
-      },
-      {
-        id: 'shade-matte-03',
-        name: '03 Trigo Medio',
-        colorHex: '#C89B73',
-        finish: 'matte',
-        hint: 'Piel trigueña',
-        stock: 6,
-      },
-      {
-        id: 'shade-matte-04',
-        name: 'Traslúcido HD',
-        colorHex: '#FAF5F0',
-        finish: 'matte',
-        hint: 'Tono universal',
-        stock: 4,
-      },
-    ],
-    benefits: [
-      'Efecto filtro suave que disimula poros y líneas finas',
-      'Control de brillo inteligente sin resecar las mejillas',
-      'Incluye espejo y pomo aterciopelado para retoques'
-    ],
-    ingredients: 'Talco cosmético purificado, Sílice esférica, Almidón de arroz, Vitamina E, Extracto de Aloe Vera.',
-    howToUse: 'Toma producto con brocha o pomo y presiona suavemente sobre frente, nariz, mentón y contorno de ojos.',
-    createdAt: '2026-01-25T10:00:00.000Z',
-    updatedAt: '2026-01-25T10:00:00.000Z',
-  },
-  {
-    id: 'prod-008',
-    name: 'Lip Gloss Love Queen "Berry Glow"',
-    slug: 'lip-gloss-love-queen-berry-glow',
-    shortDescription: 'Gloss de brillo espejo con aceites, no pegajoso.',
-    description: 'Formulado con 5 aceites botánicos preciosos (frambuesa, jojoba, argán, almendras dulces y rosa mosqueta). Aporta volumen visual inmediato, nutrición profunda y tonos jugosos irresistibles.',
-    price: 29000,
-    category: 'Labios',
-    stock: 35,
-    imageUrl: 'https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&w=800&q=80',
-    isFeatured: true,
-    variantType: 'tono',
-    shades: [
-      {
-        id: 'shade-gloss-01',
-        name: 'Rosa Dulce',
-        colorHex: '#E88CA5',
-        finish: 'glossy',
-        hint: 'Brillo sutil',
-        stock: 10,
-      },
-      {
-        id: 'shade-gloss-02',
-        name: 'Fresa Mágico',
-        colorHex: '#D94E6A',
-        finish: 'glossy',
-        hint: 'Rosado fresco',
-        stock: 9,
-      },
-      {
-        id: 'shade-gloss-03',
-        name: 'Cereza Jugosa',
-        colorHex: '#A8243B',
-        finish: 'glossy',
-        hint: 'Rojo jugoso',
-        stock: 8,
-      },
-      {
-        id: 'shade-gloss-04',
-        name: 'Nude Café',
-        colorHex: '#A66B5B',
-        finish: 'matte',
-        hint: 'Mate natural',
-        stock: 8,
-      },
-    ],
-    benefits: [
-      'Acabado espejo ultra brillante sin sensación pegajosa',
-      'Repara labios resecos desde la primera aplicación',
-      'Aplicador jumbo suave tipo felpa de máxima precisión'
-    ],
-    ingredients: 'Aceite de semilla de frambuesa, Polibuteno, Aceite de Jojoba, Tocoferol, Extracto de fresa silvestre, Sabor natural.',
-    howToUse: 'Aplica directamente en cualquier momento del día. Úsalo solo para un look fresco o sobre tu labial favorito.',
-    createdAt: '2026-01-28T10:00:00.000Z',
-    updatedAt: '2026-01-28T10:00:00.000Z',
-  },
-  {
-    id: 'prod-009',
-    name: 'Manteca Corporal Batida Rosa Mosqueta & Vainilla',
-    slug: 'manteca-corporal-batida-rosa-mosqueta-vainilla',
-    shortDescription: 'Crema corporal batida con rosa mosqueta y vainilla.',
-    description: 'Una textura cremosa deliciosa que se derrite al contacto con la piel. Nutre intensamente codos, piernas y escote, mejorando la elasticidad y dejando una fragancia delicada que permanece por horas.',
-    price: 49000,
-    category: 'Skincare y Cuidado',
-    stock: 15,
-    imageUrl: 'https://images.unsplash.com/photo-1608248597359-002d287ee3b6?auto=format&fit=crop&w=800&q=80',
-    isFeatured: false,
-    benefits: [
-      'Nutrición profunda para pieles secas o deshidratadas',
-      'Rápida absorción sin dejar residuo graso en la ropa',
-      'Sin aceites minerales derivados del petróleo'
-    ],
-    ingredients: 'Manteca de Karité sin refinar, Manteca de Cacao colombiana, Aceite de Rosa Mosqueta orgánico, Extracto natural de Vainilla Bourbon, Vitamina E.',
-    howToUse: 'Masajea sobre la piel ligeramente húmeda después de la ducha matutina o nocturna.',
-    createdAt: '2026-02-01T10:00:00.000Z',
-    updatedAt: '2026-02-01T10:00:00.000Z',
-  },
-  {
-    id: 'prod-010',
-    name: 'Set de 8 Brochas Profesionales "Rose Edition" con Estuche',
-    slug: 'set-brochas-profesionales-rose-edition',
-    shortDescription: '8 brochas suaves de oro rosa con estuche de viaje.',
-    description: 'Incluye brochas esenciales para base, polvos, contorno, rubor, difuminado de ojos, cejas y labios. Vienen acompañadas de un neceser rígido acolchado de viaje en tono rosa empolvado.',
-    price: 89000,
-    originalPrice: 110000,
-    category: 'Kits y Accesorios',
-    stock: 10,
-    imageUrl: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=800&q=80',
-    isFeatured: true,
-    benefits: [
-      'Fibra sintética vegana ultra densa no porosa',
-      'No absorbe producto en exceso, ahorra maquillaje',
-      'Fáciles de lavar sin desprendimiento de fibras',
-      'Incluye estuche protector rígido de viaje'
-    ],
-    ingredients: 'Fibras de Taklon de grado cosmético, Virola de aluminio anodizado oro rosa, Mango de madera lacada eco-responsable.',
-    howToUse: 'Lava semanalmente con jabón neutro y agua tibia. Seca en posición horizontal sobre una toalla limpia.',
-    createdAt: '2026-02-05T10:00:00.000Z',
-    updatedAt: '2026-02-05T10:00:00.000Z',
-  }
-];
 
 /**
  * Recursively strips `undefined` properties from objects and arrays before writing to Firestore,
@@ -447,21 +141,38 @@ class StoreService {
       const storedSettings = localStorage.getItem('dulzara_settings_v1');
       if (storedSettings) {
         this.cachedSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(storedSettings) };
-        if (!this.cachedSettings.heroButtonText || this.cachedSettings.heroButtonText.includes('favoritos') || this.cachedSettings.heroButtonText === 'Explorar Catálogo') {
+        if (
+          !this.cachedSettings.heroButtonText ||
+          this.cachedSettings.heroButtonText.includes('favoritos') ||
+          this.cachedSettings.heroButtonText === 'Explorar Catálogo'
+        ) {
           this.cachedSettings.heroButtonText = 'Explorar Catálogo ✦';
+        }
+        if (
+          this.cachedSettings.heroImageUrl &&
+          this.cachedSettings.heroImageUrl.includes('images.unsplash.com/photo-1522337360788')
+        ) {
+          this.cachedSettings.heroImageUrl = DEFAULT_HERO_SETTINGS.heroImageUrl;
         }
       }
     } catch {
       this.cachedSettings = { ...DEFAULT_SETTINGS };
     }
 
-    // 2. Products
+    // 2. Products (never load legacy deleted demo products prod-001..prod-010)
     try {
       const storedProducts = localStorage.getItem('dulzara_products_v1');
       if (storedProducts) {
         const parsed = JSON.parse(storedProducts);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          this.cachedProducts = parsed.map((p: Product) => normalizeProductWithShades(p));
+        if (Array.isArray(parsed)) {
+          const validStored = parsed.filter(
+            (p: Product) => p && p.id && !LEGACY_DELETED_IDS.has(p.id)
+          );
+          if (validStored.length > 0) {
+            this.cachedProducts = validStored.map((p: Product) => normalizeProductWithShades(p));
+          } else {
+            this.cachedProducts = INITIAL_PRODUCTS.map((p) => normalizeProductWithShades(p));
+          }
         } else {
           this.cachedProducts = INITIAL_PRODUCTS.map((p) => normalizeProductWithShades(p));
         }
@@ -503,7 +214,7 @@ class StoreService {
   }
 
   /**
-   * Initializes real-time listener with automatic catalog migration/seeding
+   * Initializes real-time listener with Firestore as source of truth
    */
   private async initRealtimeSubscriptions() {
     if (this.isInitialized) return;
@@ -514,27 +225,24 @@ class StoreService {
       const productsRef = collection(db, 'products');
       onSnapshot(
         productsRef,
-        async (snapshot) => {
-          if (snapshot.empty) {
-            // Seed Firestore with initial products if collection is empty
-            await this.seedCatalogToFirestore();
-          } else {
-            const list: Product[] = [];
-            snapshot.forEach((docSnap) => {
-              const rawItem = docSnap.data() as Product;
+        (snapshot) => {
+          const list: Product[] = [];
+          snapshot.forEach((docSnap) => {
+            const rawItem = docSnap.data() as Product;
+            if (rawItem && rawItem.id && !LEGACY_DELETED_IDS.has(rawItem.id)) {
               const normalized = normalizeProductWithShades(rawItem);
               list.push(normalized);
-            });
-            // Keep consistent ordering by createdAt descending or id
-            list.sort((a, b) => {
-              const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-              const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-              return tB - tA;
-            });
-            this.cachedProducts = list;
-            this.saveProductsToLocalStorage();
-            this.notifyProductListeners();
-          }
+            }
+          });
+          // Keep consistent ordering by createdAt descending or id
+          list.sort((a, b) => {
+            const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return tB - tA;
+          });
+          this.cachedProducts = list;
+          this.saveProductsToLocalStorage();
+          this.notifyProductListeners();
         },
         (error) => {
           console.warn('Realtime products listener notice (operating in local resilience mode):', error);
