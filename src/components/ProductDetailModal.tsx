@@ -171,18 +171,42 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
       <div className="relative w-full max-w-4xl bg-white rounded-3xl shadow-xl overflow-hidden border border-[#E8BFCB]/50 z-10 max-h-[92vh] flex flex-col animate-dulzara-pop">
         
-        {/* Top close bar (clean and unobstructed so category title never truncates on mobile) */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#F7E5E9] bg-[#FFFDF9] shrink-0">
-          <div className="text-[11px] sm:text-xs uppercase tracking-[0.08em] text-[#B9788B] font-semibold">
+        {/* Top close & share bar */}
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#F7E5E9] bg-[#FFFDF9] shrink-0 gap-2">
+          <div className="text-[11px] sm:text-xs uppercase tracking-[0.08em] text-[#B9788B] font-semibold min-w-0">
             {product.category} · Dulzara Original
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Cerrar ventana"
-            className="p-1.5 text-[#382A30]/60 hover:text-[#382A30] rounded-full hover:bg-[#F7E5E9] transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleShareProduct}
+              aria-label="Compartir o copiar enlace directo de este producto"
+              title="Compartir o copiar enlace directo de este producto"
+              className="p-1.5 sm:px-2.5 sm:py-1 text-[11px] font-medium text-[#382A30]/80 hover:text-[#B9788B] bg-transparent sm:bg-[#F7E5E9]/60 hover:bg-[#F7E5E9] border border-transparent sm:border-[#E8BFCB]/70 rounded-full transition-colors flex items-center gap-1 sm:gap-1.5 cursor-pointer"
+            >
+              {linkCopied ? (
+                <>
+                  <Check className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-700" />
+                  <span className="text-emerald-700 font-semibold text-[10px] sm:text-[11px]">
+                    <span className="sm:hidden">¡Copiado!</span>
+                    <span className="hidden sm:inline">¡Enlace copiado!</span>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-[#B9788B]" />
+                  <span className="hidden sm:inline">Compartir</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={onClose}
+              aria-label="Cerrar ventana"
+              className="p-1.5 text-[#382A30]/60 hover:text-[#382A30] rounded-full hover:bg-[#F7E5E9] transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Modal Scrollable Content */}
@@ -204,36 +228,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     <span>Descuento</span>
                   </div>
                 )}
-
-                {/* Editorial Floating Pearl Share Button (Top-Right of Image — never crowds text) */}
-                <button
-                  type="button"
-                  onClick={handleShareProduct}
-                  aria-label="Compartir enlace de este producto"
-                  title="Compartir o copiar enlace directo de este producto"
-                  className={`group/share absolute top-3 right-3 z-10 rounded-full p-1 pr-3 transition-all duration-300 flex items-center gap-2 cursor-pointer select-none active:scale-95 ${
-                    linkCopied
-                      ? 'bg-[#382A30]/95 text-[#FFFDF9] border border-[#E8BFCB]/60 shadow-lg ring-2 ring-[#E8BFCB]/50'
-                      : 'bg-[#FFFDF9]/92 hover:bg-white text-[#382A30] border border-[#E8BFCB]/85 hover:border-[#B9788B] shadow-[0_6px_20px_-4px_rgba(56,42,48,0.16)] backdrop-blur-md'
-                  }`}
-                >
-                  <span
-                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-transform duration-300 group-hover/share:scale-105 ${
-                      linkCopied
-                        ? 'bg-[#B9788B] text-white'
-                        : 'bg-[#F7E5E9] text-[#B9788B] group-hover/share:bg-[#B9788B] group-hover/share:text-white'
-                    }`}
-                  >
-                    {linkCopied ? (
-                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                    ) : (
-                      <Share2 className="w-3.5 h-3.5" />
-                    )}
-                  </span>
-                  <span className="text-[11px] font-semibold tracking-wide whitespace-nowrap">
-                    {linkCopied ? '¡Enlace copiado! ✦' : 'Compartir'}
-                  </span>
-                </button>
               </div>
             </div>
 
