@@ -46,10 +46,16 @@ const AdminPanel = lazy(() =>
 );
 
 export default function App() {
-  // Store Data state
-  const [products, setProducts] = useState<Product[]>([]);
+  // Store Data state (initialized synchronously so deep links /productos/:slug resolve on first paint)
+  const [products, setProducts] = useState<Product[]>(() => storeService.getProducts());
   const [orders, setOrders] = useState<Order[]>([]);
   const [settings, setSettings] = useState<StoreSettings>(storeService.getSettings());
+
+  // Resolve initial deep link (/productos/:slug or /categoria/:slug) immediately
+  const initialRouteMatch = useMemo(() => {
+    if (typeof window === 'undefined') return { product: null, category: null };
+    return parseStorePath(window.location.pathname, storeService.getProducts());
+  }, []);
 
   // User Cart State
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -62,13 +68,17 @@ export default function App() {
   });
 
   // Navigation & Filtering
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(
+    () => initialRouteMatch.category
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'all' | 'price-asc' | 'price-desc'>('all');
   const [onlyFeatured, setOnlyFeatured] = useState(false);
 
   // Modals & Panels state
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(
+    () => initialRouteMatch.product
+  );
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<{ order: Order; whatsappUrl: string } | null>(null);
@@ -81,7 +91,14 @@ export default function App() {
   // Toast / notification feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
-  const hasResolvedInitialRouteRef = useRef<boolean>(false);
+  const hasResolvedInitialRouteRef = useRef<boolean>(
+    Boolean(
+      typeof window !== 'undefined' &&
+        ((window.location.pathname.replace(/\/+$/, '') || '/') === '/' ||
+          initialRouteMatch.product ||
+          initialRouteMatch.category)
+    )
+  );
 
   const handleSelectCategory = (category: string | null) => {
     setActiveCategory(category);
@@ -151,7 +168,7 @@ export default function App() {
     };
   }, []);
 
-  // Synchronize open ProductDetailModal, initial URL route (/productos/:slug or /categoria/:slug), & Cart items with live product updates
+  // Synchronize open ProductDetailModal, initial URL route (/productos/:slug or /categoria/:slug for newly added Firestore items), & Cart items with live product updates
   useEffect(() => {
     if (products.length === 0) return;
 
@@ -164,6 +181,7 @@ export default function App() {
         if (initialRoute.product) {
           hasResolvedInitialRouteRef.current = true;
           setSelectedProduct(initialRoute.product);
+          setActiveCategory(initialRoute.product.category);
         } else if (initialRoute.category) {
           hasResolvedInitialRouteRef.current = true;
           setActiveCategory(initialRoute.category);

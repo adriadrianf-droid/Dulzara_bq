@@ -22,45 +22,45 @@ export const CATEGORY_SEO_MAP: Record<string, CategorySeoMeta> = {
     slug: 'rostro',
     title: 'Maquillaje para el Rostro en Barranquilla | Dulzara Colombia',
     description:
-      'Compra iluminadores, polvos compactos y maquillaje para el rostro en Dulzara Barranquilla. Texturas ligeras para todo tipo de piel con envíos a toda Colombia.',
+      'Compra bases líquidas, correctores, rubores, iluminadores y polvos compactos en Dulzara Barranquilla. Texturas ligeras para todo tipo de piel con envíos a toda Colombia.',
     subtitle:
-      'Fórmulas sedosas y acabado natural para realzar la luminosidad de tu piel todos los días.',
+      'Bases, correctores, rubores, iluminadores y polvos compactos para realzar la luminosidad de tu piel.',
   },
   'Ojos y Cejas': {
     category: 'Ojos y Cejas',
     slug: 'ojos-y-cejas',
-    title: 'Paletas de Sombras, Ojos y Cejas | Dulzara Barranquilla',
+    title: 'Pestañinas, Delineadores, Ojos y Cejas | Dulzara Barranquilla',
     description:
-      'Encuentra paletas de sombras de alta pigmentación y productos para ojos y cejas en Dulzara, tu tienda de maquillaje en Barranquilla con envíos a toda Colombia.',
+      'Encuentra pestañinas voluminizadoras, delineadores a prueba de agua y productos para ojos y cejas en Dulzara, tu tienda de maquillaje en Barranquilla con envíos a toda Colombia.',
     subtitle:
-      'Tonos versátiles, pigmentos suaves y fijación duradera para miradas expresivas.',
+      'Pestañinas de larga duración, delineadores precisos y fijación duradera para miradas expresivas.',
   },
   Labios: {
     category: 'Labios',
     slug: 'labios',
-    title: 'Labiales Mate y Lip Gloss Hidratantes | Dulzara Barranquilla',
+    title: 'Tintas de Labios, Delineadores y Gloss | Dulzara Barranquilla',
     description:
-      'Descubre labiales mate aterciopelados y lip gloss con aceites botánicos en Dulzara Barranquilla. Compra maquillaje online en Colombia y pide fácil por WhatsApp.',
+      'Descubre tintas de labios, lápices delineadores, bálsamos y lip gloss hidratantes en Dulzara Barranquilla. Compra maquillaje online en Colombia y pide fácil por WhatsApp.',
     subtitle:
-      'Colores intensos, brillo espejo y nutrición con manteca de karité y aceites naturales.',
+      'Tintas, delineadores de larga duración, bálsamos y brillo espejo para unos labios radiantes.',
   },
   'Skincare y Cuidado': {
     category: 'Skincare y Cuidado',
     slug: 'skincare-y-cuidado',
     title: 'Skincare y Productos de Cuidado Personal | Dulzara Barranquilla',
     description:
-      'Cuida tu piel con sueros de niacinamida, cremas hidratantes, tónicos de rosas y mantecas corporales en Dulzara. Productos de belleza y cuidado personal en Barranquilla.',
+      'Cuida tu piel con bálsamos hidratantes, sueros faciales y productos de cuidado personal en Dulzara Barranquilla con envíos a toda Colombia.',
     subtitle:
-      'Rutinas de hidratación y cuidado personal con extractos botánicos para una piel radiante.',
+      'Rutinas de hidratación y cuidado diario para mantener tu piel suave, fresca y luminosa.',
   },
   'Kits y Accesorios': {
     category: 'Kits y Accesorios',
     slug: 'kits-y-accesorios',
-    title: 'Brochas de Maquillaje, Kits y Accesorios | Dulzara Barranquilla',
+    title: 'Kits de Maquillaje y Accesorios de Belleza | Dulzara Barranquilla',
     description:
-      'Complementa tu rutina con sets de brochas profesionales y accesorios de belleza en Dulzara Barranquilla. Envíos seguros a toda Colombia y atención por WhatsApp.',
+      'Complementa tu rutina con kits de maquillaje y accesorios de belleza en Dulzara Barranquilla. Envíos seguros a toda Colombia y atención personalizada por WhatsApp.',
     subtitle:
-      'Herramientas suaves y estuches prácticos para aplicar tu maquillaje con acabado profesional.',
+      'Kits prácticos y herramientas de belleza para aplicar tu maquillaje con acabado profesional.',
   },
 };
 
@@ -205,6 +205,7 @@ export function updatePageSEO(params: {
   let title = HOME_SEO.title;
   let description = HOME_SEO.description;
   let canonicalPath = '/';
+  let ogImage = `${CANONICAL_ORIGIN}/favicon-512x512.png`;
 
   if (selectedProduct) {
     const slug = getProductSlug(selectedProduct);
@@ -216,6 +217,9 @@ export function updatePageSEO(params: {
         : selectedProduct.description || selectedProduct.shortDescription || HOME_SEO.description;
     description =
       rawDesc.length > 158 ? `${rawDesc.slice(0, 155).trim()}...` : rawDesc;
+    if (selectedProduct.imageUrl && selectedProduct.imageUrl.startsWith('http')) {
+      ogImage = selectedProduct.imageUrl;
+    }
   } else if (activeCategory && CATEGORY_SEO_MAP[activeCategory]) {
     const catMeta = CATEGORY_SEO_MAP[activeCategory];
     canonicalPath = `/categoria/${catMeta.slug}`;
@@ -231,6 +235,7 @@ export function updatePageSEO(params: {
   setMetaTag('property', 'og:description', description);
   setMetaTag('property', 'og:url', canonicalUrl);
   setMetaTag('property', 'og:site_name', 'Dulzara');
+  setMetaTag('property', 'og:image', ogImage);
   setMetaTag('name', 'application-name', 'Dulzara');
   setMetaTag('name', 'twitter:card', 'summary_large_image');
   setMetaTag('name', 'twitter:title', title);

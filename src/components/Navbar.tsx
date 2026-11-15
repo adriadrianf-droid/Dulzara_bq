@@ -196,7 +196,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     );
   };
 
-  const popularSearches = ['Labial', 'Bruma', 'Manteca corporal', 'Brochas', 'Skincare'];
+  const popularSearches = ['Base', 'Corrector', 'Pestañina', 'Rubor', 'Polvo', 'Labial'];
 
   return (
     <header className="sticky top-0 z-40 bg-[#FFFDF9]/95 backdrop-blur-md border-b border-[#E8BFCB]/40 transition-colors w-full">

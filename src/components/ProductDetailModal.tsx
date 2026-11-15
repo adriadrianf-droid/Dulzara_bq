@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ShoppingBag, Check, ShieldCheck, Truck, Sparkles, MessageCircle } from 'lucide-react';
+import { X, ShoppingBag, Check, ShieldCheck, Truck, Sparkles, MessageCircle, Share2 } from 'lucide-react';
 import { Product, ProductShade, SelectedShade } from '../types/store';
 import { formatCOP, createWhatsAppUrl, getVariantLabel } from '../utils/formatters';
+import { getProductSlug, CANONICAL_ORIGIN } from '../utils/seo';
 import { BeautyImage } from './BeautyImage';
 import { SwatchCircle } from './SwatchCircle';
 
@@ -20,14 +21,19 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [selectedShade, setSelectedShade] = useState<ProductShade | null>(null);
   const lastProductIdRef = useRef<string | null>(null);
   const addedTimerRef = useRef<number | null>(null);
+  const copiedTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (addedTimerRef.current !== null) {
         window.clearTimeout(addedTimerRef.current);
+      }
+      if (copiedTimerRef.current !== null) {
+        window.clearTimeout(copiedTimerRef.current);
       }
     };
   }, []);
@@ -44,6 +50,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     if (isNewProduct) {
       setQuantity(1);
       setJustAdded(false);
+      setLinkCopied(false);
     }
 
     if (product.shades && product.shades.length > 0) {
@@ -60,6 +67,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   }, [product]);
 
   if (!product) return null;
+
+  const productSlug = getProductSlug(product);
+  const productDirectUrl = `${CANONICAL_ORIGIN}/productos/${productSlug}`;
 
   const hasShades = Array.isArray(product.shades) && product.shades.length > 0;
   const variantLabel = getVariantLabel(product.variantType);
@@ -103,17 +113,51 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     }, 2000);
   };
 
+  const handleShareProduct = async () => {
+    const shareUrl =
+      typeof window !== 'undefined' && window.location.origin.includes('dulzara')
+        ? `${window.location.origin}/productos/${productSlug}`
+        : productDirectUrl;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${product.name} | Dulzara`,
+          text: `Mira este producto en Dulzara: ${product.name} (${formatCOP(product.price)})`,
+          url: shareUrl,
+        });
+        return;
+      }
+    } catch {
+      // User cancelled native share or share failed; fall back to copying link
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      if (copiedTimerRef.current !== null) {
+        window.clearTimeout(copiedTimerRef.current);
+      }
+      setLinkCopied(true);
+      copiedTimerRef.current = window.setTimeout(() => {
+        setLinkCopied(false);
+        copiedTimerRef.current = null;
+      }, 2200);
+    } catch {
+      // Fallback ignored
+    }
+  };
+
   const handleDirectWhatsAppQuestion = () => {
     const shadeText =
       hasShades && selectedShade
         ? ` (${variantLabel}: ${selectedShade.name})`
         : '';
-    const msg = `¡Hola Dulzara! Me interesa el producto: *${product.name}*${shadeText} (Ref: ${product.id}) con precio de ${formatCOP(product.price)}. ¿Tienen disponibilidad y me pueden dar más información?`;
+    const msg = `¡Hola Dulzara! Me interesa el producto: *${product.name}*${shadeText} con precio de ${formatCOP(product.price)}.\nEnlace: ${productDirectUrl}\n¿Tienen disponibilidad y me pueden dar más información?`;
     window.open(createWhatsAppUrl(whatsappNumber, msg), '_blank');
   };
 
   const handleShadeAdvisoryWhatsApp = () => {
-    const msg = `¡Hola Dulzara! Quiero comprar el producto *${product.name}* pero tengo dudas sobre cuál tono elegir, ¿me podrían asesorar?`;
+    const msg = `¡Hola Dulzara! Quiero comprar el producto *${product.name}* (${productDirectUrl}) pero tengo dudas sobre cuál tono elegir, ¿me podrían asesorar?`;
     window.open(createWhatsAppUrl(whatsappNumber, msg), '_blank');
   };
 
@@ -127,18 +171,38 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
       <div className="relative w-full max-w-4xl bg-white rounded-3xl shadow-xl overflow-hidden border border-[#E8BFCB]/50 z-10 max-h-[92vh] flex flex-col animate-dulzara-pop">
         
-        {/* Top close bar */}
+        {/* Top close & share bar */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#F7E5E9] bg-[#FFFDF9] shrink-0">
-          <div className="text-[11px] sm:text-xs uppercase tracking-[0.08em] text-[#B9788B] font-semibold">
+          <div className="text-[11px] sm:text-xs uppercase tracking-[0.08em] text-[#B9788B] font-semibold truncate pr-2">
             {product.category} · Dulzara Original
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Cerrar ventana"
-            className="p-1.5 text-[#382A30]/60 hover:text-[#382A30] rounded-full hover:bg-[#F7E5E9] transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleShareProduct}
+              className="px-2.5 py-1 text-[11px] font-medium text-[#382A30]/80 hover:text-[#B9788B] bg-[#F7E5E9]/60 hover:bg-[#F7E5E9] border border-[#E8BFCB]/70 rounded-full transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="Compartir o copiar enlace directo de este producto"
+            >
+              {linkCopied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-700" />
+                  <span className="text-emerald-700 font-semibold">¡Enlace copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-3.5 h-3.5 text-[#B9788B]" />
+                  <span>Compartir</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={onClose}
+              aria-label="Cerrar ventana"
+              className="p-1.5 text-[#382A30]/60 hover:text-[#382A30] rounded-full hover:bg-[#F7E5E9] transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Modal Scrollable Content */}
