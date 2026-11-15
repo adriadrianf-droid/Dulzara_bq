@@ -15,6 +15,10 @@
     {
       "source": "/categorias/:slug*",
       "destination": "/index.html"
+    },
+    {
+      "source": "/((?!assets/|favicon|apple-touch-icon|robots\\.txt|sitemap\\.xml|site\\.webmanifest).*)",
+      "destination": "/index.html"
     }
   ]
 }

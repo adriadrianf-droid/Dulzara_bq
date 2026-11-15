@@ -106,7 +106,8 @@ export function findProductBySlug(slug: string, products: Product[]): Product | 
 
 export function parseStorePath(
   pathname: string,
-  products: Product[]
+  products: Product[],
+  search: string = typeof window !== 'undefined' ? window.location.search : ''
 ): { product: Product | null; category: string | null } {
   const cleanPath = pathname.replace(/\/+$/, '') || '/';
   const parts = cleanPath.split('/').filter(Boolean);
@@ -127,6 +128,34 @@ export function parseStorePath(
       product: null,
       category: matchedCategory,
     };
+  }
+
+  if (search) {
+    try {
+      const params = new URLSearchParams(search);
+      const prodParam = params.get('producto') || params.get('product');
+      if (prodParam) {
+        const matchedProduct = findProductBySlug(prodParam, products);
+        if (matchedProduct) {
+          return {
+            product: matchedProduct,
+            category: matchedProduct.category,
+          };
+        }
+      }
+      const catParam = params.get('categoria') || params.get('category');
+      if (catParam) {
+        const matchedCategory = findCategoryBySlug(catParam);
+        if (matchedCategory) {
+          return {
+            product: null,
+            category: matchedCategory,
+          };
+        }
+      }
+    } catch {
+      // Ignored
+    }
   }
 
   return { product: null, category: null };

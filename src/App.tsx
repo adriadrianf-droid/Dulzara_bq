@@ -94,7 +94,8 @@ export default function App() {
   const hasResolvedInitialRouteRef = useRef<boolean>(
     Boolean(
       typeof window !== 'undefined' &&
-        ((window.location.pathname.replace(/\/+$/, '') || '/') === '/' ||
+        (((window.location.pathname.replace(/\/+$/, '') || '/') === '/' &&
+          !window.location.search) ||
           initialRouteMatch.product ||
           initialRouteMatch.category)
     )
@@ -105,7 +106,7 @@ export default function App() {
     setSelectedProduct(null);
     const nextPath = category ? `/categoria/${getCategorySlug(category)}` : '/';
     try {
-      if (window.location.pathname !== nextPath) {
+      if (window.location.pathname !== nextPath || window.location.search) {
         window.history.pushState({ category }, '', nextPath);
       }
     } catch {
@@ -118,14 +119,14 @@ export default function App() {
     try {
       if (product) {
         const nextPath = `/productos/${getProductSlug(product)}`;
-        if (window.location.pathname !== nextPath) {
+        if (window.location.pathname !== nextPath || window.location.search) {
           window.history.pushState({ productSlug: getProductSlug(product) }, '', nextPath);
         }
       } else {
         const fallbackPath = activeCategory
           ? `/categoria/${getCategorySlug(activeCategory)}`
           : '/';
-        if (window.location.pathname !== fallbackPath) {
+        if (window.location.pathname !== fallbackPath || window.location.search) {
           window.history.pushState({ category: activeCategory }, '', fallbackPath);
         }
       }
@@ -174,10 +175,10 @@ export default function App() {
 
     if (!hasResolvedInitialRouteRef.current) {
       const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
-      if (currentPath === '/') {
+      if (currentPath === '/' && !window.location.search) {
         hasResolvedInitialRouteRef.current = true;
       } else {
-        const initialRoute = parseStorePath(currentPath, products);
+        const initialRoute = parseStorePath(currentPath, products, window.location.search);
         if (initialRoute.product) {
           hasResolvedInitialRouteRef.current = true;
           setSelectedProduct(initialRoute.product);

@@ -115,7 +115,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   const handleShareProduct = async () => {
     const shareUrl =
-      typeof window !== 'undefined' && window.location.origin.includes('dulzara')
+      typeof window !== 'undefined' && window.location.origin
         ? `${window.location.origin}/productos/${productSlug}`
         : productDirectUrl;
 
