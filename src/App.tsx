@@ -9,7 +9,7 @@ import {
   ShoppingBag
 } from 'lucide-react';
 
-import { Product, CartItem, Order, StoreSettings, SelectedShade } from './types/store';
+import { Product, CartItem, Order, StoreSettings, SelectedShade, OFFICIAL_CATEGORIES } from './types/store';
 import { storeService } from './services/storeService';
 import { authService, AdminUser } from './services/authService';
 import {
@@ -51,10 +51,27 @@ export default function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [settings, setSettings] = useState<StoreSettings>(storeService.getSettings());
 
+  // Customer-visible catalog: products with stock <= 0 are NEVER deleted from Firestore or Admin Panel,
+  // they simply stop appearing in the customer storefront until restocked.
+  const customerProducts = useMemo(
+    () => products.filter((p) => p.stock > 0),
+    [products]
+  );
+
+  // Only show categories in customer navigation & filters that currently have at least 1 available product
+  const availableCategories = useMemo(
+    () =>
+      OFFICIAL_CATEGORIES.filter((cat) =>
+        customerProducts.some((p) => p.category === cat)
+      ),
+    [customerProducts]
+  );
+
   // Resolve initial deep link (/productos/:slug or /categoria/:slug) immediately
   const initialRouteMatch = useMemo(() => {
     if (typeof window === 'undefined') return { product: null, category: null };
-    return parseStorePath(window.location.pathname, storeService.getProducts());
+    const availableInitial = storeService.getProducts().filter((p) => p.stock > 0);
+    return parseStorePath(window.location.pathname, availableInitial);
   }, []);
 
   // User Cart State
@@ -178,12 +195,15 @@ export default function App() {
       if (currentPath === '/' && !window.location.search) {
         hasResolvedInitialRouteRef.current = true;
       } else {
-        const initialRoute = parseStorePath(currentPath, products, window.location.search);
-        if (initialRoute.product) {
+        const initialRoute = parseStorePath(currentPath, customerProducts, window.location.search);
+        if (initialRoute.product && initialRoute.product.stock > 0) {
           hasResolvedInitialRouteRef.current = true;
           setSelectedProduct(initialRoute.product);
           setActiveCategory(initialRoute.product.category);
-        } else if (initialRoute.category) {
+        } else if (
+          initialRoute.category &&
+          availableCategories.includes(initialRoute.category as (typeof OFFICIAL_CATEGORIES)[number])
+        ) {
           hasResolvedInitialRouteRef.current = true;
           setActiveCategory(initialRoute.category);
         }
@@ -191,7 +211,8 @@ export default function App() {
     } else {
       setSelectedProduct((prev) => {
         if (!prev) return null;
-        return products.find((p) => p.id === prev.id) || null;
+        const live = products.find((p) => p.id === prev.id);
+        return live && live.stock > 0 ? live : null;
       });
     }
 
@@ -256,26 +277,42 @@ export default function App() {
     });
   }, [products]);
 
+  // Reset activeCategory if all products in that category become out-of-stock or removed
+  useEffect(() => {
+    if (
+      activeCategory &&
+      customerProducts.length > 0 &&
+      !availableCategories.includes(activeCategory as (typeof OFFICIAL_CATEGORIES)[number])
+    ) {
+      setActiveCategory(null);
+    }
+  }, [activeCategory, availableCategories, customerProducts.length]);
+
   // Handle browser Back/Forward navigation for /productos/:slug and /categoria/:slug
   useEffect(() => {
     const handlePopState = () => {
-      const route = parseStorePath(window.location.pathname, products);
-      setSelectedProduct(route.product);
-      setActiveCategory(route.product ? activeCategory : route.category);
+      const route = parseStorePath(window.location.pathname, customerProducts);
+      setSelectedProduct(route.product && route.product.stock > 0 ? route.product : null);
+      const validCat =
+        route.category &&
+        availableCategories.includes(route.category as (typeof OFFICIAL_CATEGORIES)[number])
+          ? route.category
+          : null;
+      setActiveCategory(route.product ? activeCategory : validCat);
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [products, activeCategory]);
+  }, [customerProducts, availableCategories, activeCategory]);
 
   // Keep page <title>, <meta name="description">, canonical URL, and Schema.org Product/Offer JSON-LD updated
   useEffect(() => {
     updatePageSEO({
       selectedProduct,
       activeCategory,
-      products,
+      products: customerProducts,
       settings,
     });
-  }, [selectedProduct, activeCategory, products, settings]);
+  }, [selectedProduct, activeCategory, customerProducts, settings]);
 
   const loadData = () => {
     setProducts(storeService.getProducts());
@@ -394,16 +431,16 @@ export default function App() {
     0
   );
 
-  // Global search matches across all categories
+  // Global search matches across all available customer products (stock > 0)
   const allSearchMatches = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    return products.filter((p) =>
+    return customerProducts.filter((p) =>
       matchesSearchQuery(p.name, searchQuery) ||
       matchesSearchQuery(p.description || '', searchQuery) ||
       matchesSearchQuery(p.shortDescription || '', searchQuery) ||
       matchesSearchQuery(p.category || '', searchQuery)
     );
-  }, [products, searchQuery]);
+  }, [customerProducts, searchQuery]);
 
   // Breakdown of matching products by category
   const matchesByCategory = useMemo(() => {
@@ -415,15 +452,15 @@ export default function App() {
 
   // Category counts: show search result count per category when searching
   const categoryCounts = useMemo(() => {
-    const list = searchQuery.trim() ? allSearchMatches : products;
+    const list = searchQuery.trim() ? allSearchMatches : customerProducts;
     return list.reduce((acc, p) => {
       acc[p.category] = (acc[p.category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-  }, [products, searchQuery, allSearchMatches]);
+  }, [customerProducts, searchQuery, allSearchMatches]);
 
-  // Filtered & sorted catalog with accent, case, and plural tolerance
-  const filteredProducts = products.filter((product) => {
+  // Filtered & sorted catalog with accent, case, and plural tolerance (only in-stock products for customers)
+  const filteredProducts = customerProducts.filter((product) => {
     const matchesCategory = !activeCategory || product.category === activeCategory;
     const matchesSearch =
       !searchQuery.trim() ||
@@ -555,7 +592,7 @@ export default function App() {
         activeCategory={activeCategory}
         onSearchChange={setSearchQuery}
         searchQuery={searchQuery}
-        products={products}
+        products={customerProducts}
         onSelectProduct={handleSelectProduct}
         onSearchSubmit={handleSearchSubmit}
       />
@@ -682,12 +719,13 @@ export default function App() {
               </div>
             </div>
 
-            {/* Segmented Category Filter Bar */}
+            {/* Segmented Category Filter Bar (Only displays categories with available products) */}
             <CategoryFilter
               activeCategory={activeCategory}
               onSelectCategory={handleSelectCategory}
-              totalProductsCount={searchQuery.trim() ? allSearchMatches.length : products.length}
+              totalProductsCount={searchQuery.trim() ? allSearchMatches.length : customerProducts.length}
               categoryCounts={categoryCounts}
+              availableCategories={availableCategories}
             />
 
             {/* Search query feedback with cross-category awareness */}
@@ -891,6 +929,7 @@ export default function App() {
           }
         }}
         onFilterCategory={handleSelectCategory}
+        availableCategories={availableCategories}
       />
 
       {/* Modals & Drawers */}

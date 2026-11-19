@@ -196,7 +196,28 @@ export const Navbar: React.FC<NavbarProps> = ({
     );
   };
 
-  const popularSearches = ['Base', 'Corrector', 'Pestañina', 'Rubor', 'Polvo', 'Labial'];
+  const visibleCategories = useMemo(
+    () =>
+      OFFICIAL_CATEGORIES.filter((cat) =>
+        products.some((p) => p.category === cat && p.stock > 0)
+      ),
+    [products]
+  );
+
+  const popularSearches = useMemo(() => {
+    const candidates = ['Base', 'Corrector', 'Pestañina', 'Rubor', 'Polvo', 'Labial', 'Delineador', 'Gloss'];
+    const matching = candidates.filter((term) =>
+      products.some(
+        (p) =>
+          p.stock > 0 &&
+          (matchesSearchQuery(p.name, term) ||
+            matchesSearchQuery(p.category || '', term) ||
+            matchesSearchQuery(p.shortDescription || '', term) ||
+            matchesSearchQuery(p.description || '', term))
+      )
+    );
+    return matching.length > 0 ? matching.slice(0, 6) : ['Base', 'Corrector', 'Pestañina', 'Labial'];
+  }, [products]);
 
   return (
     <header className="sticky top-0 z-40 bg-[#FFFDF9]/95 backdrop-blur-md border-b border-[#E8BFCB]/40 transition-colors w-full">
@@ -233,7 +254,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Zone 2: 5 Clean single-line official categories — balanced & centered across desktop space */}
+        {/* Zone 2: Clean single-line active categories — only categories with available products */}
         <nav
           className={`hidden md:flex md:flex-1 items-center justify-center font-medium text-[#382A30]/80 min-w-0 md:px-1 lg:px-2 transition-all duration-200 ${
             showSearchInput
@@ -249,7 +270,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             Inicio & Todo
           </button>
-          {OFFICIAL_CATEGORIES.map((cat) => (
+          {visibleCategories.map((cat) => (
             <button
               key={cat}
               onClick={() => handleCategoryClick(cat)}
@@ -518,7 +539,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               Todos los productos
             </button>
-            {OFFICIAL_CATEGORIES.map((cat) => (
+            {visibleCategories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => handleCategoryClick(cat)}

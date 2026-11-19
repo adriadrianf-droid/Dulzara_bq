@@ -90,6 +90,7 @@ export interface Order {
   shippingCost: number;
   total: number;
   status: OrderStatus;
+  stockDeducted?: boolean;
   statusNotes?: string;
   whatsappSent: boolean;
   createdAt: string;

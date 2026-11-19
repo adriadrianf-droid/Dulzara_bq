@@ -7,12 +7,14 @@ interface FooterProps {
   settings: StoreSettings;
   onOpenAdmin: () => void;
   onFilterCategory: (category: string | null) => void;
+  availableCategories?: string[];
 }
 
 export const Footer: React.FC<FooterProps> = ({
   settings,
   onOpenAdmin,
   onFilterCategory,
+  availableCategories,
 }) => {
   const whatsappUrl = createWhatsAppUrl(
     settings.whatsappNumber,
@@ -20,6 +22,10 @@ export const Footer: React.FC<FooterProps> = ({
   );
 
   const cleanInsta = settings.instagramHandle ? settings.instagramHandle.replace('@', '').trim() : 'dulzara_bq';
+  const categoriesToDisplay =
+    availableCategories && availableCategories.length > 0
+      ? availableCategories
+      : OFFICIAL_CATEGORIES;
 
   return (
     <footer className="bg-[#382A30] text-[#FFFDF9] border-t border-[#382A30] pt-14 pb-10">
@@ -72,7 +78,7 @@ export const Footer: React.FC<FooterProps> = ({
               Colecciones
             </h4>
             <ul className="space-y-2 text-xs text-white/80">
-              {OFFICIAL_CATEGORIES.map((cat) => (
+              {categoriesToDisplay.map((cat) => (
                 <li key={cat}>
                   <button
                     onClick={() => {

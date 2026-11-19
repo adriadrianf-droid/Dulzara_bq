@@ -6,6 +6,7 @@ interface CategoryFilterProps {
   onSelectCategory: (category: string | null) => void;
   totalProductsCount: number;
   categoryCounts: Record<string, number>;
+  availableCategories?: string[];
 }
 
 export const CategoryFilter: React.FC<CategoryFilterProps> = ({
@@ -13,10 +14,15 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
   onSelectCategory,
   totalProductsCount,
   categoryCounts,
+  availableCategories,
 }) => {
+  const nonEmptyCategories = (availableCategories || OFFICIAL_CATEGORIES).filter(
+    (cat) => (categoryCounts[cat] || 0) > 0 || activeCategory === cat
+  );
+
   const categories = [
     { id: null, label: 'Todo el Catálogo', count: totalProductsCount },
-    ...OFFICIAL_CATEGORIES.map((cat) => ({
+    ...nonEmptyCategories.map((cat) => ({
       id: cat,
       label: cat,
       count: categoryCounts[cat] || 0,

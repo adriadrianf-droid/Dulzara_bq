@@ -376,12 +376,31 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Status Change handler
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     try {
+      const prevOrder = orders.find((o) => o.id === orderId);
+      const prevStatus = prevOrder?.status || 'pendiente';
+      const wasDeducted =
+        typeof prevOrder?.stockDeducted === 'boolean'
+          ? prevOrder.stockDeducted
+          : prevStatus !== 'pendiente';
+      const willBeDeducted = newStatus !== 'pendiente';
+
       await storeService.updateOrderStatus(orderId, newStatus);
       onRefreshData();
       if (selectedOrder && selectedOrder.id === orderId) {
-        setSelectedOrder({ ...selectedOrder, status: newStatus });
+        setSelectedOrder({
+          ...selectedOrder,
+          status: newStatus,
+          stockDeducted: willBeDeducted,
+        });
       }
-      showFeedback(`Pedido #${orderId} actualizado a estado "${newStatus.toUpperCase()}" ${newStatus === 'confirmado' ? '(existencias descontadas en inventario)' : ''}.`);
+
+      let stockMsg = '';
+      if (!wasDeducted && willBeDeducted) {
+        stockMsg = ' (existencias descontadas del inventario)';
+      } else if (wasDeducted && !willBeDeducted) {
+        stockMsg = ' (existencias restauradas al inventario)';
+      }
+      showFeedback(`Pedido #${orderId} actualizado a estado "${newStatus.toUpperCase()}"${stockMsg}.`);
     } catch (e) {
       console.error('Error updating status:', e);
     }
@@ -1265,7 +1284,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           </td>
                           <td className="py-3.5 px-4 text-center">
                             {isZero ? (
-                              <span className="text-red-700 font-semibold text-[11px]">Agotado</span>
+                              <div className="inline-flex flex-col items-center">
+                                <span className="text-red-700 font-semibold text-[11px]">Agotado</span>
+                                <span className="text-[9.5px] text-[#382A30]/60">Oculto a clientes</span>
+                              </div>
                             ) : isLow ? (
                               <span className="text-amber-700 font-semibold text-[11px]">Bajo ({prod.stock})</span>
                             ) : (
@@ -2528,10 +2550,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               
               <div>
                 <h3 className="text-base font-bold text-[#382A30]">
-                  ¿Eliminar pedido permanentemente?
+                  ¿Eliminar pedido del historial?
                 </h3>
                 <p className="text-xs text-[#382A30]/70 mt-1">
-                  Esta acción liberará espacio en la base de datos de Dulzara eliminando los datos del cliente y pedido. No se puede revertir.
+                  Esta acción eliminará el registro del pedido del historial sin modificar ni alterar el stock actual de tus productos. No se puede revertir.
                 </p>
               </div>
 

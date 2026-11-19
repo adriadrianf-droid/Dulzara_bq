@@ -6,6 +6,7 @@ import {
   updateDoc,
   deleteDoc,
   onSnapshot,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import {
@@ -258,17 +259,15 @@ class StoreService {
       onSnapshot(
         ordersRef,
         (snapshot) => {
-          if (!snapshot.empty) {
-            const list: Order[] = [];
-            snapshot.forEach((docSnap) => {
-              list.push(docSnap.data() as Order);
-            });
-            // Sort by creation date descending
-            list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            this.cachedOrders = list;
-            this.saveOrdersToLocalStorage();
-            this.notifyOrderListeners();
-          }
+          const list: Order[] = [];
+          snapshot.forEach((docSnap) => {
+            list.push(docSnap.data() as Order);
+          });
+          // Sort by creation date descending
+          list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          this.cachedOrders = list;
+          this.saveOrdersToLocalStorage();
+          this.notifyOrderListeners();
         },
         (error) => {
           console.warn('Orders listener notice:', error);
@@ -477,13 +476,25 @@ class StoreService {
   async updateStock(id: string, newStock: number): Promise<Product> {
     const current = this.getProductById(id);
     if (current && current.shades && current.shades.length > 0) {
-      // Adjust the first available shade or distribute delta so total stock matches
       const currentTotal = computeProductStock(current.shades, current.stock);
-      const delta = Math.max(0, newStock) - currentTotal;
-      if (delta !== 0) {
-        const updatedShades = current.shades.map((s, idx) =>
-          idx === 0 ? { ...s, stock: Math.max(0, s.stock + delta) } : s
-        );
+      let remainingDelta = Math.max(0, newStock) - currentTotal;
+      if (remainingDelta !== 0) {
+        const updatedShades = current.shades.map((s) => ({ ...s }));
+        if (remainingDelta > 0) {
+          updatedShades[0].stock = Math.max(
+            0,
+            (Number(updatedShades[0].stock) || 0) + remainingDelta
+          );
+        } else {
+          for (let i = updatedShades.length - 1; i >= 0 && remainingDelta < 0; i--) {
+            const avail = Math.max(0, Number(updatedShades[i].stock) || 0);
+            if (avail > 0) {
+              const deduct = Math.min(avail, -remainingDelta);
+              updatedShades[i].stock = avail - deduct;
+              remainingDelta += deduct;
+            }
+          }
+        }
         return this.updateProduct(id, { shades: updatedShades });
       }
     }
@@ -588,6 +599,7 @@ class StoreService {
       shippingCost,
       total: finalTotal,
       status: 'pendiente',
+      stockDeducted: false,
       statusNotes: 'Pedido generado por tienda web Dulzara. Pendiente por confirmación de pago/envío.',
       whatsappSent: false,
       createdAt: now,
@@ -610,9 +622,12 @@ class StoreService {
   }
 
   /**
-   * Status change with Atomic Inventory Deduction:
-   * Moving from 'pendiente' to any active status ('confirmado', 'preparando', 'enviado', 'entregado')
-   * deducts stock once. Moving back to 'pendiente' restores stock.
+   * Status change with Atomic Inventory Deduction & Restoration:
+   * - Moving from 'pendiente' to any active status ('confirmado', 'preparando', 'enviado', 'entregado')
+   *   deducts stock once across all items in the order.
+   * - Moving between active statuses ('confirmado' -> 'enviado', etc.) does not deduct again.
+   * - Moving from any active status back to 'pendiente' restores the deducted stock back to inventory.
+   * - Never deletes any product when stock reaches 0 (products with 0 stock stay in Admin and Firestore).
    */
   async updateOrderStatus(orderId: string, status: OrderStatus, notes?: string): Promise<Order> {
     const existingOrder = this.cachedOrders.find((o) => o.id === orderId);
@@ -621,9 +636,16 @@ class StoreService {
     }
 
     const oldStatus = existingOrder.status;
+    if (oldStatus === status && notes === undefined) {
+      return existingOrder;
+    }
+
     const now = new Date().toISOString();
 
-    const wasStockDeducted = oldStatus !== 'pendiente';
+    const wasStockDeducted =
+      existingOrder.stockDeducted !== undefined
+        ? Boolean(existingOrder.stockDeducted)
+        : oldStatus !== 'pendiente';
     const willStockBeDeducted = status !== 'pendiente';
     const stockDeltaFactor =
       !wasStockDeducted && willStockBeDeducted
@@ -632,25 +654,54 @@ class StoreService {
         ? 1
         : 0;
 
-    const updatedProductIds = new Set<string>();
+    const productsToPersist: Product[] = [];
 
     if (stockDeltaFactor !== 0) {
       this.cachedProducts = this.cachedProducts.map((prod) => {
+        const prodNameNorm = (prod.name || '').trim().toLowerCase();
         const matchingOrderItems = existingOrder.items.filter(
-          (it) => it.productId === prod.id
+          (it) =>
+            it.productId === prod.id ||
+            (Boolean(prodNameNorm) &&
+              (it.name || '').trim().toLowerCase() === prodNameNorm)
         );
         if (matchingOrderItems.length === 0) return prod;
 
-        updatedProductIds.add(prod.id);
-        let nextShades = prod.shades ? prod.shades.map((s) => ({ ...s })) : undefined;
-        let nextStock = prod.stock;
+        let nextShades =
+          Array.isArray(prod.shades) && prod.shades.length > 0
+            ? prod.shades.map((s) => ({ ...s }))
+            : undefined;
+        let nextStock = Math.max(0, Number(prod.stock) || 0);
 
         for (const item of matchingOrderItems) {
-          const delta = stockDeltaFactor * item.quantity;
-          if (nextShades && nextShades.length > 0 && item.selectedShade) {
-            nextShades = nextShades.map((s) =>
-              s.id === item.selectedShade?.id
-                ? { ...s, stock: Math.max(0, s.stock + delta) }
+          const qty = Math.max(0, Number(item.quantity) || 0);
+          if (qty === 0) continue;
+          const delta = stockDeltaFactor * qty;
+
+          if (nextShades && nextShades.length > 0) {
+            let targetIndex = -1;
+            if (item.selectedShade?.id) {
+              targetIndex = nextShades.findIndex(
+                (s) => s.id === item.selectedShade?.id
+              );
+            }
+            if (targetIndex === -1 && item.selectedShade?.name) {
+              const targetShadeName = item.selectedShade.name.trim().toLowerCase();
+              targetIndex = nextShades.findIndex(
+                (s) => s.name.trim().toLowerCase() === targetShadeName
+              );
+            }
+            if (targetIndex === -1) {
+              targetIndex =
+                delta < 0
+                  ? nextShades.findIndex((s) => (Number(s.stock) || 0) > 0)
+                  : 0;
+              if (targetIndex === -1) targetIndex = 0;
+            }
+
+            nextShades = nextShades.map((s, idx) =>
+              idx === targetIndex
+                ? { ...s, stock: Math.max(0, (Number(s.stock) || 0) + delta) }
                 : s
             );
             nextStock = computeProductStock(nextShades, nextStock);
@@ -659,12 +710,14 @@ class StoreService {
           }
         }
 
-        return {
+        const updatedProd: Product = {
           ...prod,
           ...(nextShades ? { shades: nextShades } : {}),
           stock: nextStock,
           updatedAt: now,
         };
+        productsToPersist.push(updatedProd);
+        return updatedProd;
       });
 
       this.saveProductsToLocalStorage();
@@ -674,6 +727,7 @@ class StoreService {
     const updatedOrder: Order = {
       ...existingOrder,
       status,
+      stockDeducted: willStockBeDeducted,
       statusNotes: notes !== undefined ? notes : existingOrder.statusNotes,
       updatedAt: now,
     };
@@ -684,35 +738,36 @@ class StoreService {
     this.saveOrdersToLocalStorage();
     this.notifyOrderListeners();
 
-    // Persist to Firestore (both stock changes and order changes)
+    // Persist both stock changes and order status atomically in a single Firestore batch
+    // so intermediate onSnapshot events never overwrite cachedProducts mid-loop
     try {
-      for (const prodId of updatedProductIds) {
-        const prod = this.cachedProducts.find((p) => p.id === prodId);
-        if (prod) {
-          await setDoc(
-            doc(db, 'products', prodId),
-            sanitizeForFirestore({
-              stock: prod.stock,
-              ...(prod.shades ? { shades: prod.shades } : {}),
-              updatedAt: now,
-            }),
-            { merge: true }
-          );
-        }
+      const batch = writeBatch(db);
+      for (const prod of productsToPersist) {
+        batch.set(
+          doc(db, 'products', prod.id),
+          sanitizeForFirestore({
+            stock: prod.stock,
+            ...(prod.shades ? { shades: prod.shades } : {}),
+            updatedAt: now,
+          }),
+          { merge: true }
+        );
       }
 
-      const orderRef = doc(db, 'orders', orderId);
-      await setDoc(
-        orderRef,
+      batch.set(
+        doc(db, 'orders', orderId),
         sanitizeForFirestore({
           status,
+          stockDeducted: willStockBeDeducted,
           statusNotes: updatedOrder.statusNotes,
           updatedAt: now,
         }),
         { merge: true }
       );
+
+      await batch.commit();
     } catch (firestoreErr) {
-      console.warn('Firestore update warning (applied and persisted in local state):', firestoreErr);
+      console.warn('Firestore batch update warning (applied and persisted in local state):', firestoreErr);
     }
 
     return updatedOrder;
