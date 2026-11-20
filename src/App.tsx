@@ -859,7 +859,11 @@ export default function App() {
               )}
             </div>
           ) : (
-            <div id="grid-productos" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+            <div
+              id="grid-productos"
+              key={activeCategory || 'all'}
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 animate-in fade-in slide-in-from-bottom-1 duration-300"
+            >
               {sortedProducts.map((product) => (
                 <ProductCard
                   key={product.id}

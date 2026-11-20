@@ -338,8 +338,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <div
                   role="radiogroup"
                   aria-label="Ciudad de entrega"
-                  className="p-1.5 rounded-2xl bg-[#F7E5E9]/65 border border-[#E8BFCB]/80 grid grid-cols-2 gap-1.5"
+                  className="relative p-1 rounded-2xl bg-[#F7E5E9]/70 border border-[#E8BFCB]/80 grid grid-cols-2 isolate overflow-hidden shadow-inner shadow-[#B9788B]/5"
                 >
+                  {/* Gliding GPU-accelerated active capsule */}
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] rounded-xl bg-[#B9788B] bg-gradient-to-b from-[#C48497] to-[#B9788B] shadow-[0_3px_10px_-2px_rgba(185,120,139,0.4)] ring-1 ring-white/25 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
+                      formData.city === 'Soledad' ? 'translate-x-full' : 'translate-x-0'
+                    }`}
+                  />
+
                   {COVERAGE_CITIES.map((item) => {
                     const isSelected = formData.city === item.city;
                     return (
@@ -349,29 +357,33 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         role="radio"
                         aria-checked={isSelected}
                         onClick={() => handleCitySelect(item.city)}
-                        className={`relative py-2.5 px-2.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center text-center select-none ${
+                        className={`relative z-10 py-2.5 px-2.5 rounded-xl cursor-pointer flex items-center justify-center text-center select-none font-semibold transition-colors duration-300 ${
                           isSelected
-                            ? 'bg-[#B9788B] text-white shadow-sm shadow-[#382A30]/15 font-semibold'
-                            : 'bg-white/75 text-[#382A30]/70 hover:bg-white hover:text-[#382A30] font-medium border border-transparent hover:border-[#E8BFCB]'
+                            ? 'text-white'
+                            : 'text-[#382A30]/70 hover:text-[#382A30]'
                         }`}
                       >
                         <span className="inline-flex items-center justify-center gap-1.5">
                           <MapPin
-                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform duration-200 ${
-                              isSelected ? 'text-white scale-105' : 'text-[#B9788B]/75'
+                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-all duration-300 ease-out will-change-transform ${
+                              isSelected
+                                ? 'text-white -translate-y-[0.5px]'
+                                : 'text-[#B9788B]/75 translate-y-0'
                             }`}
                           />
                           <span className="text-[13px] sm:text-sm whitespace-nowrap tracking-wide">
                             {item.city}
                           </span>
-                          {isSelected && (
-                            <span
-                              aria-hidden="true"
-                              className="text-[10px] text-[#F7E5E9] font-serif leading-none ml-0.5"
-                            >
-                              ✦
-                            </span>
-                          )}
+                          <span
+                            aria-hidden="true"
+                            className={`w-2.5 inline-flex items-center justify-center text-[10px] text-[#F7E5E9] font-serif leading-none transition-all duration-300 ease-out will-change-transform ${
+                              isSelected
+                                ? 'opacity-100 scale-100 rotate-0'
+                                : 'opacity-0 scale-50 -rotate-45'
+                            }`}
+                          >
+                            ✦
+                          </span>
                         </span>
                       </button>
                     );
