@@ -862,7 +862,7 @@ export default function App() {
             <div
               id="grid-productos"
               key={activeCategory || 'all'}
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 animate-in fade-in slide-in-from-bottom-1 duration-300"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-1 duration-300"
             >
               {sortedProducts.map((product) => (
                 <ProductCard

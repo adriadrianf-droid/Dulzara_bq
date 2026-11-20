@@ -73,11 +73,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
     const isMobile = window.innerWidth < 640;
     const titleHeight = titleEl.offsetHeight;
-    const isSingleLineTitle = titleHeight <= (isMobile ? 23 : 26);
+    const isSingleLineTitle = titleHeight <= (isMobile ? 23 : 24);
 
     // 1. Base allocation tailored per device & card components:
-    // - Cards without shade selector automatically reclaim those ~28px for 1 extra description line.
-    // - Cards with a 1-line title reclaim 1 extra line for the description.
+    // - On mobile (<640px), keep generous 3-5 base lines.
+    // - On desktop (>=640px), keep a sleek, scannable 2-4 line budget so cards stay compact and balanced.
     const baseLines = isMobile
       ? hasShades
         ? isSingleLineTitle
@@ -88,11 +88,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         : 4
       : hasShades
       ? isSingleLineTitle
-        ? 4
-        : 3
+        ? 3
+        : 2
       : isSingleLineTitle
-      ? 5
-      : 4;
+      ? 4
+      : 3;
 
     // 2. Blank whitespace reclamation using metrics invariant to descLines:
     // If a sibling card in the grid row stretches this card taller, fill that blank space with description lines.
@@ -103,12 +103,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     const availableInnerHeight = bodyEl.clientHeight - padY;
 
     const nonDescTopHeight = Math.max(0, topStackEl.offsetHeight - descEl.offsetHeight);
-    const footerReserveHeight = footerEl.offsetHeight + (isMobile ? 10 : 12);
+    const footerReserveHeight = footerEl.offsetHeight + (isMobile ? 10 : 10);
     const availableForDescPx = availableInnerHeight - nonDescTopHeight - footerReserveHeight;
-    const lineHeightPx = isMobile ? 16.5 : 17.5;
+    const lineHeightPx = isMobile ? 16.5 : 16.5;
 
     const linesFittingInBlankSpace = Math.floor(availableForDescPx / lineHeightPx);
-    const targetLines = Math.min(6, Math.max(baseLines, linesFittingInBlankSpace));
+    const maxAllowedLines = isMobile ? 6 : 4;
+    const targetLines = Math.min(maxAllowedLines, Math.max(baseLines, linesFittingInBlankSpace));
 
     setDescLines((prev) => (prev !== targetLines ? targetLines : prev));
   }, [hasShades]);
@@ -231,7 +232,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       tabIndex={0}
       role="button"
       aria-label={`Ver descripción y detalles de ${product.name}`}
-      className="relative group flex flex-col bg-white rounded-2xl sm:rounded-3xl border border-[#E8BFCB]/45 hover:border-[#B9788B]/65 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_-8px_rgba(56,42,48,0.1)] overflow-hidden cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-[#B9788B]/40"
+      className="relative group flex flex-col bg-white rounded-2xl border border-[#E8BFCB]/45 hover:border-[#B9788B]/65 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_26px_-8px_rgba(56,42,48,0.1)] overflow-hidden cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-[#B9788B]/40"
     >
       {/* Product Image Frame (Balanced vertical proportion on mobile for left vertical swatch capsule + top discount badge) */}
       <div className="relative aspect-[4/4.2] sm:aspect-square w-full overflow-hidden bg-[#F7E5E9]/30">
@@ -244,7 +245,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Original Discount badge at top-left */}
         {hasDiscount && (
-          <div className="bg-[#B9788B] text-white text-[11px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-full shadow-sm absolute top-2.5 left-2.5 sm:top-3 sm:left-3 z-10 tracking-wide flex items-center gap-1">
+          <div className="bg-[#B9788B] text-white text-[10.5px] sm:text-[11px] font-bold px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm absolute top-2.5 left-2.5 z-10 tracking-wide flex items-center gap-1">
             <span aria-hidden="true">✦</span>
             <span>Descuento</span>
           </div>
@@ -316,11 +317,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       {/* Card Content & Metadata */}
       <div
         ref={cardBodyRef}
-        className="relative p-3 sm:p-4.5 flex flex-col flex-1 justify-between"
+        className="relative p-3 sm:p-3.5 flex flex-col flex-1 justify-between"
       >
-        <div ref={topStackRef} className="space-y-1 sm:space-y-1.5">
+        <div ref={topStackRef} className="space-y-1">
           {/* Category unboxed metadata with dot separator */}
-          <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] uppercase tracking-[0.07em] text-[#B9788B] font-semibold">
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.07em] text-[#B9788B] font-semibold">
             <span className="truncate">{product.category}</span>
             {isLowStock && (
               <>
@@ -335,7 +336,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {/* Product Title */}
           <h3
             ref={titleRef}
-            className="text-[13.5px] sm:text-[15.5px] font-serif-brand font-semibold text-[#382A30] group-hover:text-[#B9788B] transition-colors line-clamp-2 leading-[1.28]"
+            className="text-[13.5px] sm:text-[14px] font-serif-brand font-semibold text-[#382A30] group-hover:text-[#B9788B] transition-colors line-clamp-2 leading-[1.26]"
           >
             <a
               href={`/productos/${getProductSlug(product)}`}
@@ -353,9 +354,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {/* Short Description — Dynamically adapts line budget to available vertical space on mobile & desktop */}
           <p
             ref={descRef}
-            className={`text-[11.5px] sm:text-xs text-[#382A30]/72 ${
+            className={`text-[11.5px] text-[#382A30]/72 ${
               LINE_CLAMP_CLASSES[descLines] || 'line-clamp-3'
-            } font-sans pt-0.5 leading-[1.45]`}
+            } font-sans pt-0.5 leading-[1.42]`}
           >
             {product.shortDescription}
           </p>
@@ -369,14 +370,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   e.stopPropagation();
                   setShowQuickSelect((prev) => !prev);
                 }}
-                className="max-w-full px-2 py-0.5 sm:py-1 rounded-lg bg-[#F7E5E9]/50 hover:bg-[#F7E5E9]/85 border border-[#E8BFCB]/55 text-left transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                className="max-w-full px-2 py-0.5 rounded-lg bg-[#F7E5E9]/50 hover:bg-[#F7E5E9]/85 border border-[#E8BFCB]/55 text-left transition-colors cursor-pointer inline-flex items-center gap-1.5"
                 title="Toca para elegir o cambiar de tono"
               >
                 <span
-                  className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shrink-0 ring-1 ring-black/10"
+                  className="w-2 h-2 rounded-full shrink-0 ring-1 ring-black/10"
                   style={{ backgroundColor: displayShade.colorHex }}
                 />
-                <span className="font-sans text-[10px] sm:text-[10.5px] leading-tight text-[#382A30] min-w-0">
+                <span className="font-sans text-[10px] leading-tight text-[#382A30] min-w-0">
                   <strong className="font-semibold text-[#382A30]">
                     {displayShade.name.replace(/^0\d\s+/, '')}
                   </strong>
@@ -465,14 +466,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Pricing and Action */}
         <div
           ref={footerRef}
-          className="pt-2.5 sm:pt-3 mt-2.5 border-t border-[#F7E5E9] flex items-center justify-between gap-1.5 sm:gap-2"
+          className="pt-2 sm:pt-2.5 mt-2 border-t border-[#F7E5E9] flex items-center justify-between gap-1.5"
         >
           <div className="flex flex-col min-w-0 shrink-0">
-            <span className="text-[13.5px] sm:text-base font-bold text-[#382A30] tabular-nums leading-tight">
+            <span className="text-[13.5px] sm:text-[14.5px] font-bold text-[#382A30] tabular-nums leading-tight">
               {formatCOP(product.price)}
             </span>
             {hasDiscount && (
-              <span className="text-[10.5px] sm:text-xs text-[#382A30]/45 line-through tabular-nums leading-tight">
+              <span className="text-[10.5px] sm:text-[11px] text-[#382A30]/45 line-through tabular-nums leading-tight">
                 {formatCOP(product.originalPrice!)}
               </span>
             )}
@@ -509,8 +510,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               disabled={isOutOfStock}
               className={`relative rounded-full font-semibold transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer ${
                 selectedShade
-                  ? 'px-2.5 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] leading-tight'
-                  : 'p-2.5 sm:p-3 text-xs shrink-0'
+                  ? 'px-2.5 py-1.5 text-[10px] sm:text-[10.5px] leading-tight'
+                  : 'p-2.5 text-xs shrink-0'
               } ${
                 isOutOfStock
                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
