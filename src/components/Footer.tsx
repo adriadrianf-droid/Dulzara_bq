@@ -102,7 +102,7 @@ export const Footer: React.FC<FooterProps> = ({
             <div className="space-y-2.5 text-xs text-white/80">
               <div className="flex items-start gap-2">
                 <Truck className="w-4 h-4 text-[#E8BFCB] shrink-0 mt-0.5" />
-                <span>Despachos desde {settings.cityOrigin || 'Barranquilla Atlántico, Colombia'}. Cobertura nacional. Envío gratis desde {formatCOP(settings.freeShippingThreshold)}.</span>
+                <span>Entregas rápidas y directas en Barranquilla y Soledad (sin demoras de transportadora). Domicilio gratis desde {formatCOP(settings.freeShippingThreshold)}. Próximamente en todo el Atlántico y Colombia.</span>
               </div>
               <div className="flex items-start gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#E8BFCB] shrink-0 mt-0.5" />

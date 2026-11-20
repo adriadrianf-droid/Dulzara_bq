@@ -227,7 +227,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   <span className="font-semibold tabular-nums">{formatCOP(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-[#382A30]/80">
-                  <span>Envío nacional</span>
+                  <span>Domicilio (Barranquilla / Soledad)</span>
                   <span className="tabular-nums">
                     {amountNeededForFreeShipping === 0 ? (
                       <span className="text-emerald-800 font-semibold">¡GRATIS!</span>

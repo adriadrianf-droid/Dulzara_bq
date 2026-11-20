@@ -531,7 +531,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                   <Truck className="w-4 h-4 text-[#B9788B] shrink-0" />
-                  <span>Despachos asegurados a cualquier rincón de Colombia</span>
+                  <span>Domicilio rápido y directo en Barranquilla y Soledad (sin esperas de transportadora)</span>
                 </div>
               </div>
             </div>

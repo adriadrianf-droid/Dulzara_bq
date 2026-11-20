@@ -5,7 +5,7 @@ export const CANONICAL_ORIGIN = 'https://dulzara.vercel.app';
 export const HOME_SEO = {
   title: 'Dulzara | Maquillaje, belleza y cuidado personal en Barranquilla',
   description:
-    'Descubre Dulzara, tu tienda de maquillaje, productos de belleza y cuidado personal en Barranquilla con envíos a toda Colombia. Explora nuestro catálogo y realiza tus pedidos fácilmente por WhatsApp.',
+    'Descubre Dulzara, tu tienda de maquillaje, productos de belleza y cuidado personal con domicilios rápidos y directos en Barranquilla y Soledad. Explora nuestro catálogo y realiza tus pedidos fácilmente por WhatsApp.',
 };
 
 export interface CategorySeoMeta {
@@ -20,9 +20,9 @@ export const CATEGORY_SEO_MAP: Record<string, CategorySeoMeta> = {
   Rostro: {
     category: 'Rostro',
     slug: 'rostro',
-    title: 'Maquillaje para el Rostro en Barranquilla | Dulzara Colombia',
+    title: 'Maquillaje para el Rostro en Barranquilla y Soledad | Dulzara',
     description:
-      'Compra bases líquidas, correctores, rubores, iluminadores y polvos compactos en Dulzara Barranquilla. Texturas ligeras para todo tipo de piel con envíos a toda Colombia.',
+      'Compra bases líquidas, correctores, rubores, iluminadores y polvos compactos en Dulzara con domicilios rápidos en Barranquilla y Soledad.',
     subtitle:
       'Bases, correctores, rubores, iluminadores y polvos compactos para realzar la luminosidad de tu piel.',
   },
@@ -31,7 +31,7 @@ export const CATEGORY_SEO_MAP: Record<string, CategorySeoMeta> = {
     slug: 'ojos-y-cejas',
     title: 'Pestañinas, Delineadores, Ojos y Cejas | Dulzara Barranquilla',
     description:
-      'Encuentra pestañinas voluminizadoras, delineadores a prueba de agua y productos para ojos y cejas en Dulzara, tu tienda de maquillaje en Barranquilla con envíos a toda Colombia.',
+      'Encuentra pestañinas voluminizadoras, delineadores a prueba de agua y productos para ojos y cejas en Dulzara con domicilios rápidos en Barranquilla y Soledad.',
     subtitle:
       'Pestañinas de larga duración, delineadores precisos y fijación duradera para miradas expresivas.',
   },
@@ -40,7 +40,7 @@ export const CATEGORY_SEO_MAP: Record<string, CategorySeoMeta> = {
     slug: 'labios',
     title: 'Tintas de Labios, Delineadores y Gloss | Dulzara Barranquilla',
     description:
-      'Descubre tintas de labios, lápices delineadores, bálsamos y lip gloss hidratantes en Dulzara Barranquilla. Compra maquillaje online en Colombia y pide fácil por WhatsApp.',
+      'Descubre tintas de labios, lápices delineadores, bálsamos y lip gloss hidratantes en Dulzara. Domicilios directos en Barranquilla y Soledad y pedido fácil por WhatsApp.',
     subtitle:
       'Tintas, delineadores de larga duración, bálsamos y brillo espejo para unos labios radiantes.',
   },
@@ -49,7 +49,7 @@ export const CATEGORY_SEO_MAP: Record<string, CategorySeoMeta> = {
     slug: 'skincare-y-cuidado',
     title: 'Skincare y Productos de Cuidado Personal | Dulzara Barranquilla',
     description:
-      'Cuida tu piel con bálsamos hidratantes, sueros faciales y productos de cuidado personal en Dulzara Barranquilla con envíos a toda Colombia.',
+      'Cuida tu piel con bálsamos hidratantes, sueros faciales y productos de cuidado personal en Dulzara con domicilios rápidos en Barranquilla y Soledad.',
     subtitle:
       'Rutinas de hidratación y cuidado diario para mantener tu piel suave, fresca y luminosa.',
   },
@@ -58,7 +58,7 @@ export const CATEGORY_SEO_MAP: Record<string, CategorySeoMeta> = {
     slug: 'kits-y-accesorios',
     title: 'Kits de Maquillaje y Accesorios de Belleza | Dulzara Barranquilla',
     description:
-      'Complementa tu rutina con kits de maquillaje y accesorios de belleza en Dulzara Barranquilla. Envíos seguros a toda Colombia y atención personalizada por WhatsApp.',
+      'Complementa tu rutina con kits de maquillaje y accesorios de belleza en Dulzara. Domicilios directos en Barranquilla y Soledad y atención personalizada por WhatsApp.',
     subtitle:
       'Kits prácticos y herramientas de belleza para aplicar tu maquillaje con acabado profesional.',
   },
@@ -306,10 +306,16 @@ export function updatePageSEO(params: {
       addressRegion: 'Atlántico',
       addressCountry: 'CO',
     },
-    areaServed: {
-      '@type': 'Country',
-      name: 'Colombia',
-    },
+    areaServed: [
+      {
+        '@type': 'City',
+        name: 'Barranquilla',
+      },
+      {
+        '@type': 'City',
+        name: 'Soledad',
+      },
+    ],
     sameAs: settings.instagramHandle
       ? [`https://instagram.com/${settings.instagramHandle.replace('@', '').trim()}`]
       : ['https://instagram.com/dulzara_bq'],

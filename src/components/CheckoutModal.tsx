@@ -1,16 +1,73 @@
 import React, { useState, useRef } from 'react';
-import { X, MessageCircle, AlertCircle, ShieldCheck, Loader2 } from 'lucide-react';
+import { X, MessageCircle, AlertCircle, ShieldCheck, Loader2, MapPin } from 'lucide-react';
 import { CartItem, CustomerInfo, Order, StoreSettings } from '../types/store';
 import {
   formatCOP,
-  COLOMBIAN_DEPARTMENTS,
   buildWhatsAppMessage,
   createWhatsAppUrl,
   getVariantLabel,
   getCartItemKey,
 } from '../utils/formatters';
-import { storeService } from '../services/storeService';
+import { storeService, getCityShippingCost } from '../services/storeService';
 import { SwatchCircle } from './SwatchCircle';
+
+const COVERAGE_CITIES: {
+  city: 'Barranquilla' | 'Soledad';
+  placeholderNeighborhood: string;
+  neighborhoods: string[];
+}[] = [
+  {
+    city: 'Barranquilla',
+    placeholderNeighborhood: 'Ej: Villa Carolina',
+    neighborhoods: [
+      'Villa Carolina',
+      'Alto Prado',
+      'El Prado',
+      'Riomar',
+      'Miramar',
+      'Villa Santos',
+      'Ciudad Jardín',
+      'El Recreo',
+      'Boston',
+      'Los Andes',
+      'Paraíso',
+      'Las Delicias',
+      'Las Mercedes',
+      'San Felipe',
+      'Olaya',
+      'Nuevo Horizonte',
+      'La Concepción',
+      'San José',
+      'Cevillar',
+      'Simón Bolívar',
+      'Centro',
+      'Alameda del Río',
+      'Villa Campestre',
+    ],
+  },
+  {
+    city: 'Soledad',
+    placeholderNeighborhood: 'Ej: Los Robles',
+    neighborhoods: [
+      'Los Robles',
+      'Villa Estadio',
+      'Las Moras',
+      'Portal de Las Moras',
+      'Ciudadela Metropolitana',
+      'Hipódromo',
+      'El Parque',
+      'Los Almendros',
+      'Manuela Beltrán',
+      'Soledad 2000',
+      'Villa Katanga',
+      'Tajamar',
+      'Terranova',
+      'Los Loteros',
+      'Villa Muvdi',
+      'Centro de Soledad',
+    ],
+  },
+];
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -45,18 +102,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Selected department cities
-  const currentDeptObj = COLOMBIAN_DEPARTMENTS.find(
-    (d) => d.department === formData.department
-  ) || COLOMBIAN_DEPARTMENTS[0];
+  const activeCityConfig =
+    COVERAGE_CITIES.find((c) => c.city === formData.city) || COVERAGE_CITIES[0];
 
-  const handleDepartmentChange = (dept: string) => {
-    const found = COLOMBIAN_DEPARTMENTS.find((d) => d.department === dept);
+  const handleCitySelect = (city: 'Barranquilla' | 'Soledad') => {
     setFormData((prev) => ({
       ...prev,
-      department: dept,
-      city: found ? found.cities[0] : '',
+      department: 'Atlántico',
+      city,
     }));
+    if (formErrors.city) {
+      setFormErrors((prev) => ({ ...prev, city: '' }));
+    }
   };
 
   // Preliminary calculation for display
@@ -64,8 +121,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     (sum, item) => sum + item.product.price * item.quantity,
     0
   );
+  const cityShippingRate = getCityShippingCost(settings, formData.city);
   const shippingCost =
-    subtotal >= settings.freeShippingThreshold ? 0 : settings.standardShippingCost;
+    subtotal >= settings.freeShippingThreshold ? 0 : cityShippingRate;
   const estimatedTotal = subtotal + shippingCost;
 
   const validate = (): boolean => {
@@ -88,8 +146,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       errors.neighborhood = 'Ingresa el barrio para ubicar tu entrega.';
     }
 
-    if (!formData.city.trim()) {
-      errors.city = 'Selecciona o escribe tu ciudad.';
+    if (formData.city !== 'Barranquilla' && formData.city !== 'Soledad') {
+      errors.city = 'Selecciona Barranquilla o Soledad para tu domicilio.';
     }
 
     setFormErrors(errors);
@@ -178,19 +236,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-[#E8BFCB]/50 z-10 max-h-[92vh] flex flex-col">
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[#F7E5E9] bg-[#FFFDF9] flex items-center justify-between shrink-0">
-          <div>
-            <span className="text-[11px] uppercase tracking-wider text-[#B9788B] font-semibold">
-              Paso Final · Sin Registro
+        <div className="px-5 sm:px-6 py-4 border-b border-[#F7E5E9] bg-[#FFFDF9] flex items-center justify-between gap-3 shrink-0">
+          <div className="min-w-0">
+            <span className="text-[10.5px] sm:text-[11px] uppercase tracking-wider text-[#B9788B] font-semibold block">
+              Paso Final · Domicilio Directo
             </span>
-            <h2 className="text-lg font-serif-brand font-semibold text-[#382A30]">
-              Datos de Entrega y Envío
+            <h2 className="text-base sm:text-lg font-serif-brand font-semibold text-[#382A30] leading-snug">
+              Datos de Entrega
             </h2>
           </div>
           <button
             onClick={onClose}
             aria-label="Cerrar modal"
-            className="p-1.5 text-[#382A30]/60 hover:text-[#382A30] rounded-full hover:bg-[#F7E5E9] transition-colors"
+            className="p-1.5 text-[#382A30]/60 hover:text-[#382A30] rounded-full hover:bg-[#F7E5E9] transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -200,7 +258,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         <form onSubmit={handleFinalizeWhatsAppOrder} className="flex-1 flex flex-col overflow-hidden min-h-0">
           
           {/* Scrollable Form Body */}
-          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-5">
             
             {serverError && (
               <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-start gap-2.5">
@@ -216,8 +274,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               
               {/* Customer Name */}
               <div>
-                <label className="block text-xs font-semibold text-[#382A30] mb-1">
-                  Nombre Completo *
+                <label className="block text-xs font-semibold text-[#382A30] mb-1.5">
+                  Nombre y apellido <span className="text-[#B9788B]">*</span>
                 </label>
                 <input
                   type="text"
@@ -240,11 +298,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Phone (WhatsApp) */}
               <div>
-                <label className="block text-xs font-semibold text-[#382A30] mb-1">
-                  Teléfono WhatsApp (Para coordinar entrega) *
+                <label className="block text-xs font-semibold text-[#382A30] mb-1.5">
+                  Número de WhatsApp <span className="text-[#B9788B]">*</span>
                 </label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-2.5 text-xs text-[#382A30]/60 font-medium">
+                <div className="relative flex items-center">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-sm text-[#382A30]/55 font-medium select-none">
                     +57
                   </span>
                   <input
@@ -267,64 +325,72 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 )}
               </div>
 
-              {/* Department and City */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#382A30] mb-1">
-                    Departamento *
+              {/* Direct City Selection: Barranquilla or Soledad */}
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <label className="block text-xs font-semibold text-[#382A30]">
+                    Elige tu ciudad <span className="text-[#B9788B]">*</span>
                   </label>
-                  <select
-                    value={formData.department}
-                    onChange={(e) => handleDepartmentChange(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#E8BFCB] bg-white focus:border-[#B9788B] focus:outline-none text-[#382A30]"
-                  >
-                    {COLOMBIAN_DEPARTMENTS.map((dept) => (
-                      <option key={dept.department} value={dept.department}>
-                        {dept.department}
-                      </option>
-                    ))}
-                  </select>
+                  <span className="text-[10.5px] text-[#B9788B] font-medium bg-[#F7E5E9]/70 px-2 py-0.5 rounded-full">
+                    Toca una opción
+                  </span>
                 </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[#382A30] mb-1">
-                    Ciudad o Municipio *
-                  </label>
-                  <input
-                    type="text"
-                    list="city-suggestions"
-                    placeholder="Ej: Barranquilla"
-                    value={formData.city}
-                    onChange={(e) => {
-                      setFormData({ ...formData, city: e.target.value });
-                      if (formErrors.city) setFormErrors({ ...formErrors, city: '' });
-                    }}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white focus:outline-none ${
-                      formErrors.city
-                        ? 'border-red-400 focus:border-red-500 bg-red-50/20'
-                        : 'border-[#E8BFCB] focus:border-[#B9788B]'
-                    }`}
-                  />
-                  <datalist id="city-suggestions">
-                    {currentDeptObj.cities.map((city) => (
-                      <option key={city} value={city} />
-                    ))}
-                  </datalist>
-                  {formErrors.city && (
-                    <p className="text-[11px] text-red-600 mt-1 font-medium">{formErrors.city}</p>
-                  )}
+                <div
+                  role="radiogroup"
+                  aria-label="Ciudad de entrega"
+                  className="p-1.5 rounded-2xl bg-[#F7E5E9]/65 border border-[#E8BFCB]/80 grid grid-cols-2 gap-1.5"
+                >
+                  {COVERAGE_CITIES.map((item) => {
+                    const isSelected = formData.city === item.city;
+                    return (
+                      <button
+                        key={item.city}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        onClick={() => handleCitySelect(item.city)}
+                        className={`relative py-2.5 px-2.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center text-center select-none ${
+                          isSelected
+                            ? 'bg-[#B9788B] text-white shadow-sm shadow-[#382A30]/15 font-semibold'
+                            : 'bg-white/75 text-[#382A30]/70 hover:bg-white hover:text-[#382A30] font-medium border border-transparent hover:border-[#E8BFCB]'
+                        }`}
+                      >
+                        <span className="inline-flex items-center justify-center gap-1.5">
+                          <MapPin
+                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform duration-200 ${
+                              isSelected ? 'text-white scale-105' : 'text-[#B9788B]/75'
+                            }`}
+                          />
+                          <span className="text-[13px] sm:text-sm whitespace-nowrap tracking-wide">
+                            {item.city}
+                          </span>
+                          {isSelected && (
+                            <span
+                              aria-hidden="true"
+                              className="text-[10px] text-[#F7E5E9] font-serif leading-none ml-0.5"
+                            >
+                              ✦
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
+                {formErrors.city && (
+                  <p className="text-[11px] text-red-600 mt-1 font-medium">{formErrors.city}</p>
+                )}
               </div>
 
               {/* Address and Neighborhood */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-[#382A30] mb-1">
-                    Dirección exacta de entrega *
+                  <label className="block text-xs font-semibold text-[#382A30] mb-1.5">
+                    Dirección de entrega <span className="text-[#B9788B]">*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Calle, Carrera, N° de casa, Apto o Torre"
+                    placeholder="Calle, Carrera, N° de casa o Apto"
                     value={formData.address}
                     onChange={(e) => {
                       setFormData({ ...formData, address: e.target.value });
@@ -342,12 +408,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#382A30] mb-1">
-                    Barrio *
+                  <label className="block text-xs font-semibold text-[#382A30] mb-1.5">
+                    Barrio <span className="text-[#B9788B]">*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Ej: El Poblado"
+                    list="barrio-suggestions"
+                    placeholder={activeCityConfig.placeholderNeighborhood}
                     value={formData.neighborhood}
                     onChange={(e) => {
                       setFormData({ ...formData, neighborhood: e.target.value });
@@ -359,6 +426,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         : 'border-[#E8BFCB] focus:border-[#B9788B]'
                     }`}
                   />
+                  <datalist id="barrio-suggestions">
+                    {activeCityConfig.neighborhoods.map((neighborhood) => (
+                      <option key={neighborhood} value={neighborhood} />
+                    ))}
+                  </datalist>
                   {formErrors.neighborhood && (
                     <p className="text-[11px] text-red-600 mt-1 font-medium">{formErrors.neighborhood}</p>
                   )}
@@ -367,12 +439,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Observaciones */}
               <div>
-                <label className="block text-xs font-semibold text-[#382A30] mb-1">
-                  Observaciones de entrega (Opcional)
+                <label className="block text-xs font-semibold text-[#382A30] mb-1.5">
+                  Punto de referencia <span className="text-[#382A30]/50 font-normal">(Opcional)</span>
                 </label>
                 <textarea
                   rows={2}
-                  placeholder="Instrucciones para la transportadora (ej: Portería 24h, timbrar al apto, etc.)"
+                  placeholder="Ej: Portería 24h, casa rejas blancas, diagonal al parque..."
                   value={formData.notes || ''}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#E8BFCB] bg-white focus:border-[#B9788B] focus:outline-none text-[#382A30] resize-none"
@@ -421,7 +493,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <span className="font-semibold tabular-nums">{formatCOP(subtotal)}</span>
               </div>
               <div className="flex justify-between text-[#382A30]/80">
-                <span>Envío a {formData.department}</span>
+                <span>Domicilio en {formData.city}, Atlántico</span>
                 <span className="tabular-nums">
                   {shippingCost === 0 ? (
                     <strong className="text-emerald-800">¡GRATIS!</strong>

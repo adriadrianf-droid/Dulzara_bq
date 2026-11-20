@@ -551,7 +551,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           <div className="pt-1 flex items-center justify-between text-xs text-[#382A30]/70">
-            <span>Envíos a toda Colombia</span>
+            <span>Domicilios: Barranquilla y Soledad ✦</span>
             <button
               onClick={() => {
                 onOpenAdmin();

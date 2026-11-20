@@ -30,7 +30,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
     settings?.heroImageUrl ||
     'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1000&q=80';
 
-  // Render title with "ponemos la magia" accented in #B9788B and italic if present
+  // Render title with "ponemos la magia" styled naturally, cute & delicate
   const renderTitle = (title: string) => {
     const magicPhrase = 'ponemos la magia';
     const index = title.toLowerCase().indexOf(magicPhrase);
@@ -41,7 +41,24 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       return (
         <>
           {before}
-          <span className="text-[#B9788B] italic font-serif-brand font-normal">{match}</span>
+          <span className="relative inline-block text-[#B9788B] italic font-serif-brand font-normal">
+            {match}
+            {/* Subtle, dainty hand-drawn blush curve */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 220 10"
+              fill="none"
+              preserveAspectRatio="none"
+              className="absolute -bottom-0.5 sm:-bottom-1 left-0 w-full h-1.5 sm:h-2 pointer-events-none overflow-visible"
+            >
+              <path
+                d="M4 7.5C65 2.5 155 2.5 216 7"
+                stroke="#E8BFCB"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
           {after}
         </>
       );
@@ -88,10 +105,56 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           {/* Left Text Column */}
           <div className="md:col-span-7 space-y-3.5 sm:space-y-4 lg:space-y-5">
             
-            {/* Kicker: Delicada píldora con fondo #F7E5E9 */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-[#F7E5E9] border border-[#E8BFCB]/60 shadow-2xs">
-              <span className="text-[10.5px] sm:text-xs font-semibold tracking-[0.08em] uppercase text-[#382A30]">
-                {kicker}
+            {/* Warm, unique & delicate welcome signature — soft blush aura fade, harmonious typography & twin pastel hearts */}
+            <div className="relative inline-flex items-center gap-2 sm:gap-2.5 py-1.5 pl-3 pr-6 -ml-1 rounded-l-full bg-gradient-to-r from-[#F7E5E9]/95 via-[#F7E5E9]/50 to-transparent select-none">
+              {/* Dainty left rose sparkle with warm halo dot */}
+              <span
+                aria-hidden="true"
+                className="inline-flex items-center justify-center text-[#B9788B] text-xs sm:text-sm md:text-base font-serif leading-none shrink-0"
+              >
+                ✦
+              </span>
+
+              <span className="inline-flex flex-wrap items-baseline gap-x-1.5 text-[13.5px] sm:text-[15px] md:text-base lg:text-[17.5px] leading-snug">
+                {kicker.toLowerCase().includes('lugar feliz') ? (
+                  <span className="inline-flex items-baseline gap-1.5">
+                    <span className="font-sans font-medium text-[#5A3E47] tracking-[0.01em]">
+                      Bienvenida a
+                    </span>
+                    <span className="relative inline-block font-serif-brand italic font-semibold bg-gradient-to-r from-[#B9788B] via-[#9E566C] to-[#B9788B] bg-clip-text text-transparent text-[15px] sm:text-[17px] md:text-[18.5px] lg:text-[20px]">
+                      tu lugar feliz
+                      {/* Delicate pearl-tipped rose whisper curve */}
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 130 8"
+                        fill="none"
+                        preserveAspectRatio="none"
+                        className="absolute -bottom-1 left-0 w-full h-1.5 pointer-events-none overflow-visible"
+                      >
+                        <path
+                          d="M3 5.5C38 2 92 2 124 5"
+                          stroke="#E8BFCB"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                        <circle cx="127" cy="4.8" r="1.3" fill="#B9788B" opacity="0.65" />
+                      </svg>
+                    </span>
+                  </span>
+                ) : (
+                  <span className="font-serif-brand italic font-medium text-[#B9788B]">
+                    {kicker.replace(/^✦\s*/, '').trim()}
+                  </span>
+                )}
+
+                {/* Charming twin pastel hearts (main heart + tiny tilted floating companion heart) */}
+                <span
+                  aria-hidden="true"
+                  className="inline-flex items-center self-center ml-0.5 shrink-0"
+                >
+                  <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-[17px] lg:h-[17px] text-[#B9788B] fill-[#E8BFCB] -rotate-6" />
+                  <Heart className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-[#B9788B]/80 fill-[#F7E5E9] -ml-0.5 -translate-y-1.5 rotate-12" />
+                </span>
               </span>
             </div>
 

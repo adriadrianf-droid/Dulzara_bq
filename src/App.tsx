@@ -620,9 +620,9 @@ export default function App() {
                   <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-[11.5px] sm:text-xs font-semibold text-[#382A30] leading-tight">Envíos a toda Colombia</h4>
+                  <h4 className="text-[11.5px] sm:text-xs font-semibold text-[#382A30] leading-tight">Domicilios Barranquilla y Soledad</h4>
                   <p className="text-[10.5px] sm:text-[11px] text-[#382A30]/65 leading-snug mt-0.5">
-                    Gratis desde{' '}
+                    Rápidos · Gratis desde{' '}
                     <span className="whitespace-nowrap">
                       {formatCOP(settings.freeShippingThreshold).replace('$ ', '$')}
                     </span>
@@ -671,8 +671,10 @@ export default function App() {
           <div className="space-y-3.5 sm:space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
               <div>
-                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.08em] text-[#B9788B]">
-                  Catálogo Oficial · Barranquilla y toda Colombia
+                <span className="inline-flex flex-wrap items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.12em] text-[#B9788B]">
+                  <span aria-hidden="true" className="w-4 h-[1.5px] bg-[#B9788B]/60 rounded-full" />
+                  <span>Catálogo Oficial</span>
+                  <span aria-hidden="true" className="text-[10px] font-serif text-[#B9788B]">✦</span>
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-serif-brand font-semibold text-[#382A30] leading-tight mt-0.5">
                   {activeCategory ? `Colección: ${activeCategory}` : 'Explora Todos los Productos'}

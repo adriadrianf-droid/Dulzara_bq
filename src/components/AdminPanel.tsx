@@ -43,7 +43,7 @@ import {
   getCartItemKey,
   createWhatsAppUrl,
 } from '../utils/formatters';
-import { storeService, DEFAULT_HERO_SETTINGS, computeProductStock } from '../services/storeService';
+import { storeService, DEFAULT_HERO_SETTINGS, computeProductStock, normalizeStoreSettings } from '../services/storeService';
 import { AdminUser } from '../services/authService';
 import { BeautyImage } from './BeautyImage';
 import { SwatchCircle } from './SwatchCircle';
@@ -157,10 +157,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   });
 
   // Settings form state
-  const [settingsForm, setSettingsForm] = useState<StoreSettings>({ ...settings });
+  const [settingsForm, setSettingsForm] = useState<StoreSettings>(() =>
+    normalizeStoreSettings(settings)
+  );
   const [settingsSavedMessage, setSettingsSavedMessage] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [adminActionFeedback, setAdminActionFeedback] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    setSettingsForm(normalizeStoreSettings(settings));
+  }, [settings]);
 
   // In-app Confirmation Modal States (replaces blocked native confirm dialogs)
   const [orderToDelete, setOrderToDelete] = useState<{ id: string; customerName: string; total: number } | null>(null);
@@ -1535,7 +1541,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     Parámetros de la Tienda
                   </h3>
                   <p className="text-xs text-[#382A30]/60">
-                    Control de línea de WhatsApp, tarifas y envíos en Colombia
+                    Control de línea de WhatsApp y tarifas de domicilio en Barranquilla y Soledad
                   </p>
                 </div>
                 {settingsSavedMessage && (
@@ -1573,7 +1579,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-[#382A30] mb-1">
-                      Monto mínimo para Envío Gratis ($)
+                      Costo de Envío a Barranquilla ($)
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      step={500}
+                      value={settingsForm.barranquillaShippingCost}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setSettingsForm({
+                          ...settingsForm,
+                          barranquillaShippingCost: val,
+                          standardShippingCost: val,
+                        });
+                      }}
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#382A30] mb-1">
+                      Costo de Envío a Soledad ($)
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      step={500}
+                      value={settingsForm.soledadShippingCost}
+                      onChange={(e) =>
+                        setSettingsForm({
+                          ...settingsForm,
+                          soledadShippingCost: Number(e.target.value),
+                        })
+                      }
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-[#382A30] mb-1">
+                      Monto mínimo para Envío Gratis en ambas ciudades ($)
                     </label>
                     <input
                       type="number"
@@ -1585,26 +1633,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         setSettingsForm({
                           ...settingsForm,
                           freeShippingThreshold: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-[#382A30] mb-1">
-                      Costo de Envío Estándar ($)
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min={0}
-                      step={500}
-                      value={settingsForm.standardShippingCost}
-                      onChange={(e) =>
-                        setSettingsForm({
-                          ...settingsForm,
-                          standardShippingCost: Number(e.target.value),
                         })
                       }
                       className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#E8BFCB] focus:border-[#B9788B] focus:outline-none"

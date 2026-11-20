@@ -101,7 +101,9 @@ export interface StoreSettings {
   brandName: string;
   whatsappNumber: string; // e.g. "573105551234"
   freeShippingThreshold: number; // e.g. 120000 COP
-  standardShippingCost: number; // e.g. 12000 COP
+  standardShippingCost: number; // e.g. 10000 COP (legacy fallback)
+  barranquillaShippingCost: number; // e.g. 10000 COP
+  soledadShippingCost: number; // e.g. 10000 COP
   instagramHandle: string;
   contactEmail: string;
   cityOrigin: string;

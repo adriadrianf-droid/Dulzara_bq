@@ -59,11 +59,48 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   whatsappNumber: '573122568522',
   freeShippingThreshold: 80000,
   standardShippingCost: 10000,
+  barranquillaShippingCost: 10000,
+  soledadShippingCost: 10000,
   instagramHandle: '@dulzara_bq',
   contactEmail: 'contacto@dulzara.com',
   cityOrigin: 'Barranquilla Atlántico, Colombia',
   ...DEFAULT_HERO_SETTINGS,
 };
+
+export function normalizeStoreSettings(raw?: Partial<StoreSettings>): StoreSettings {
+  const merged = { ...DEFAULT_SETTINGS, ...(raw || {}) };
+  const baseStandard =
+    typeof merged.standardShippingCost === 'number' && Number.isFinite(merged.standardShippingCost)
+      ? Math.max(0, merged.standardShippingCost)
+      : DEFAULT_SETTINGS.standardShippingCost;
+  const bqCost =
+    typeof raw?.barranquillaShippingCost === 'number' && Number.isFinite(raw.barranquillaShippingCost)
+      ? Math.max(0, raw.barranquillaShippingCost)
+      : baseStandard;
+  const solCost =
+    typeof raw?.soledadShippingCost === 'number' && Number.isFinite(raw.soledadShippingCost)
+      ? Math.max(0, raw.soledadShippingCost)
+      : baseStandard;
+
+  return {
+    ...merged,
+    standardShippingCost: bqCost,
+    barranquillaShippingCost: bqCost,
+    soledadShippingCost: solCost,
+  };
+}
+
+export function getCityShippingCost(settings: StoreSettings, city?: string): number {
+  const normalizedCity = (city || '').trim().toLowerCase();
+  if (normalizedCity === 'soledad') {
+    return typeof settings.soledadShippingCost === 'number' && Number.isFinite(settings.soledadShippingCost)
+      ? Math.max(0, settings.soledadShippingCost)
+      : Math.max(0, settings.standardShippingCost || 0);
+  }
+  return typeof settings.barranquillaShippingCost === 'number' && Number.isFinite(settings.barranquillaShippingCost)
+    ? Math.max(0, settings.barranquillaShippingCost)
+    : Math.max(0, settings.standardShippingCost || 0);
+}
 
 export function normalizeCategory(cat: string): string {
   switch (cat) {
@@ -141,7 +178,7 @@ class StoreService {
     try {
       const storedSettings = localStorage.getItem('dulzara_settings_v1');
       if (storedSettings) {
-        this.cachedSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(storedSettings) };
+        this.cachedSettings = normalizeStoreSettings(JSON.parse(storedSettings));
         if (
           !this.cachedSettings.heroButtonText ||
           this.cachedSettings.heroButtonText.includes('favoritos') ||
@@ -284,8 +321,8 @@ class StoreService {
         settingsRef,
         (docSnap) => {
           if (docSnap.exists()) {
-            const firestoreSettings = docSnap.data() as StoreSettings;
-            this.cachedSettings = { ...DEFAULT_SETTINGS, ...firestoreSettings };
+            const firestoreSettings = docSnap.data() as Partial<StoreSettings>;
+            this.cachedSettings = normalizeStoreSettings(firestoreSettings);
             try {
               localStorage.setItem('dulzara_settings_v1', JSON.stringify(this.cachedSettings));
             } catch {
@@ -575,10 +612,11 @@ class StoreService {
     }
 
     const settings = this.getSettings();
+    const cityShippingRate = getCityShippingCost(settings, customer.city);
     const shippingCost =
       calculatedSubtotal >= settings.freeShippingThreshold
         ? 0
-        : settings.standardShippingCost;
+        : cityShippingRate;
     const finalTotal = calculatedSubtotal + shippingCost;
 
     // Generate collision-free readable order reference
@@ -817,7 +855,8 @@ class StoreService {
   }
 
   async saveSettings(newSettings: Partial<StoreSettings>): Promise<StoreSettings> {
-    const merged = sanitizeForFirestore({ ...this.cachedSettings, ...newSettings });
+    const normalized = normalizeStoreSettings({ ...this.cachedSettings, ...newSettings });
+    const merged = sanitizeForFirestore(normalized);
     this.cachedSettings = merged;
 
     try {
