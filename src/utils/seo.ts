@@ -277,9 +277,8 @@ export function updatePageSEO(params: {
     '@id': `${CANONICAL_ORIGIN}/#website`,
     name: 'Dulzara',
     alternateName: [
-      'Dulzara Beauty',
-      'Dulzara Belleza y Cuidado',
-      'dulzara.vercel.app',
+      'Dulzara Cosméticos',
+      'Dulzara Barranquilla',
     ],
     url: `${CANONICAL_ORIGIN}/`,
   };
@@ -288,7 +287,7 @@ export function updatePageSEO(params: {
     '@type': 'OnlineStore',
     '@id': `${CANONICAL_ORIGIN}/#store`,
     name: 'Dulzara',
-    alternateName: 'Dulzara Belleza y Cuidado Personal',
+    alternateName: 'Dulzara Cosméticos',
     url: `${CANONICAL_ORIGIN}/`,
     logo: {
       '@type': 'ImageObject',
