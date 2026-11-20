@@ -101,7 +101,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
     <div ref={scrollWrapperRef} className="w-full overflow-x-auto no-scrollbar pb-1">
       <div
         ref={trackRef}
-        className="relative flex items-center gap-1.5 sm:gap-2 p-1.5 bg-[#F7E5E9]/55 rounded-2xl border border-[#E8BFCB]/55 w-max sm:w-auto isolate"
+        className="relative flex items-center gap-1.5 sm:gap-2 p-1.5 bg-[#F7E5E9]/55 rounded-2xl border border-[#E8BFCB]/55 w-max lg:w-auto isolate"
       >
         {/* Smooth gliding active capsule */}
         <span

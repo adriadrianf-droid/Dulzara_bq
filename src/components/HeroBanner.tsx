@@ -98,12 +98,12 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         ✦
       </span>
 
-      {/* Balanced vertical spacing for mobile and all computer viewports */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 md:py-12 lg:py-16 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 md:gap-7 lg:gap-12 items-center">
+      {/* Balanced vertical spacing for mobile, tablet, and all computer viewports */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-9 md:py-11 lg:py-16 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-7 md:gap-7 lg:gap-12 items-center">
           
           {/* Left Text Column */}
-          <div className="md:col-span-7 space-y-3.5 sm:space-y-4 lg:space-y-5">
+          <div className="md:col-span-6 lg:col-span-7 space-y-3.5 sm:space-y-4 lg:space-y-5">
             
             {/* Warm, unique & delicate welcome signature — soft blush aura fade, harmonious typography & twin pastel hearts */}
             <div className="relative inline-flex items-center gap-2 sm:gap-2.5 py-1.5 pl-3 pr-6 -ml-1 rounded-l-full bg-gradient-to-r from-[#F7E5E9]/95 via-[#F7E5E9]/50 to-transparent select-none">
@@ -158,22 +158,22 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               </span>
             </div>
 
-            {/* Main Title (H1) Playfair Display — scales smoothly per computer resolution */}
-            <h1 className="text-[28px] min-[390px]:text-[32px] sm:text-4xl md:text-[36px] lg:text-5xl xl:text-[54px] font-serif-brand font-semibold text-[#382A30] leading-[1.13] tracking-[-0.015em] text-balance">
+            {/* Main Title (H1) Playfair Display — scales smoothly across mobile, tablet, and computer */}
+            <h1 className="text-[28px] min-[390px]:text-[32px] sm:text-4xl md:text-[32px] lg:text-5xl xl:text-[54px] font-serif-brand font-semibold text-[#382A30] leading-[1.13] tracking-[-0.015em] text-balance">
               {renderTitle(rawTitle)}
             </h1>
 
             {/* Subtitle Plus Jakarta Sans */}
-            <p className="text-[13.5px] sm:text-base md:text-[15px] lg:text-lg text-[#382A30]/80 font-sans leading-[1.6] max-w-xl text-pretty">
+            <p className="text-[13.5px] sm:text-base md:text-[14.5px] lg:text-lg text-[#382A30]/80 font-sans leading-[1.6] max-w-xl text-pretty">
               {subtitle}
             </p>
 
-            {/* Compact CTAs */}
-            <div className="pt-1 sm:pt-2 flex flex-wrap items-center gap-2.5 sm:gap-3.5">
+            {/* Compact CTAs — single-line aligned on tablets */}
+            <div className="pt-1 sm:pt-2 flex flex-wrap sm:flex-nowrap lg:flex-wrap items-center gap-2.5 sm:gap-3 md:gap-2.5 lg:gap-3.5">
               <button
                 type="button"
                 onClick={onExploreClick}
-                className="px-5 sm:px-6 lg:px-7 py-2.5 sm:py-3 lg:py-3.5 bg-[#B9788B] hover:bg-[#a6687a] text-white font-semibold text-xs sm:text-sm rounded-full transition-all shadow-sm hover:shadow-md active:scale-98 flex items-center gap-1.5 sm:gap-2 cursor-pointer"
+                className="px-5 sm:px-6 md:px-4.5 lg:px-7 py-2.5 sm:py-3 md:py-2.5 lg:py-3.5 bg-[#B9788B] hover:bg-[#a6687a] text-white font-semibold text-xs sm:text-sm md:text-[13px] lg:text-sm rounded-full transition-all shadow-sm hover:shadow-md active:scale-98 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <span>{buttonText}</span>
               </button>
@@ -181,17 +181,17 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               <button
                 type="button"
                 onClick={onOpenWhatsAppAdvice}
-                className="px-4 sm:px-5 lg:px-6 py-2.5 sm:py-3 lg:py-3.5 bg-white/95 hover:bg-[#F7E5E9]/60 text-[#382A30] border border-[#E8BFCB] font-medium text-xs sm:text-sm rounded-full transition-all flex items-center gap-1.5 sm:gap-2 hover:border-[#B9788B] cursor-pointer shadow-2xs"
+                className="px-4 sm:px-5 md:px-4 lg:px-6 py-2.5 sm:py-3 md:py-2.5 lg:py-3.5 bg-white/95 hover:bg-[#F7E5E9]/60 text-[#382A30] border border-[#E8BFCB] font-medium text-xs sm:text-sm md:text-[13px] lg:text-sm rounded-full transition-all flex items-center gap-1.5 sm:gap-2 hover:border-[#B9788B] whitespace-nowrap shrink-0 cursor-pointer shadow-2xs"
               >
-                <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#25D366]" />
+                <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#25D366] shrink-0" />
                 <span>Asesoría por WhatsApp</span>
               </button>
             </div>
           </div>
 
-          {/* Right Visual Column — exact original compact size on mobile, side-by-side adaptive on computers (md+) */}
-          <div className="md:col-span-5">
-            <div className="relative mx-auto max-w-md md:max-w-none">
+          {/* Right Visual Column — exact original compact size on mobile, full aligned width on sm tablet, balanced 50% on md tablet, 5-col on lg+ desktop */}
+          <div className="md:col-span-6 lg:col-span-5">
+            <div className="relative mx-auto max-w-md sm:max-w-none">
               
               {/* Main Visual Frame */}
               <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-md sm:shadow-lg border-2 border-white ring-1 ring-[#E8BFCB]/40 bg-white group">
@@ -199,18 +199,18 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                   src={imageUrl}
                   alt="Dulzara Belleza y Cuidado Personal"
                   priority={true}
-                  className="w-full h-48 sm:h-60 md:h-auto md:aspect-[4/3.9] lg:aspect-auto lg:h-[390px] xl:h-[410px] object-cover object-center transition-transform duration-700 ease-out group-hover:scale-102"
+                  className="w-full h-48 sm:h-72 md:h-[320px] lg:h-[390px] xl:h-[410px] object-cover object-center transition-transform duration-700 ease-out group-hover:scale-102"
                 />
 
                 {/* Única etiqueta flotante delicada y limpia en una esquina con icono de corazón */}
                 {!isBadgeHidden && (
                   <div
-                    className={`absolute bottom-2.5 left-2.5 sm:bottom-4 sm:left-4 bg-white/95 backdrop-blur-md rounded-full ${
-                      badgeText ? 'px-3 sm:px-4 py-1.5 sm:py-2 gap-1.5 sm:gap-2' : 'p-2 sm:p-2.5'
-                    } border border-[#E8BFCB] shadow-md flex items-center text-[11px] sm:text-xs font-semibold text-[#382A30]`}
+                    className={`absolute bottom-2.5 left-2.5 sm:bottom-3.5 sm:left-3.5 lg:bottom-4 lg:left-4 bg-white/95 backdrop-blur-md rounded-full ${
+                      badgeText ? 'px-3 sm:px-3.5 lg:px-4 py-1.5 sm:py-1.5 lg:py-2 gap-1.5 sm:gap-2' : 'p-2 sm:p-2.5'
+                    } border border-[#E8BFCB] shadow-md flex items-center text-[11px] sm:text-xs font-semibold text-[#382A30] max-w-[calc(100%-20px)]`}
                   >
-                    <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B9788B] fill-[#B9788B]" />
-                    {badgeText ? <span>{badgeText}</span> : null}
+                    <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#B9788B] fill-[#B9788B] shrink-0" />
+                    {badgeText ? <span className="truncate">{badgeText}</span> : null}
                   </div>
                 )}
               </div>
@@ -218,7 +218,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               {/* Sutil destello de 4 puntas de marca cerca a la foto */}
               <div
                 aria-hidden="true"
-                className="hidden sm:flex absolute -top-3 -right-3 w-8 h-8 rounded-full bg-[#F7E5E9] border border-[#E8BFCB] items-center justify-center text-[#B9788B] text-base font-serif shadow-xs"
+                className="hidden sm:flex absolute -top-2.5 right-2 md:-top-3 md:-right-2.5 lg:-top-3 lg:-right-3 w-8 h-8 rounded-full bg-[#F7E5E9] border border-[#E8BFCB] items-center justify-center text-[#B9788B] text-base font-serif shadow-xs z-10"
               >
                 ✦
               </div>

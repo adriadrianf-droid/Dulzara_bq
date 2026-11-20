@@ -671,30 +671,30 @@ export default function App() {
           
           {/* Section Header */}
           <div className="space-y-3.5 sm:space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
-              <div>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-3.5 md:gap-4">
+              <div className="min-w-0 flex-1">
                 <span className="inline-flex flex-wrap items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.12em] text-[#B9788B]">
                   <span aria-hidden="true" className="w-4 h-[1.5px] bg-[#B9788B]/60 rounded-full" />
                   <span>Catálogo Oficial</span>
                   <span aria-hidden="true" className="text-[10px] font-serif text-[#B9788B]">✦</span>
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-serif-brand font-semibold text-[#382A30] leading-tight mt-0.5">
+                <h2 className="text-2xl sm:text-[26px] md:text-[26px] lg:text-3xl font-serif-brand font-semibold text-[#382A30] leading-tight mt-0.5">
                   {activeCategory ? `Colección: ${activeCategory}` : 'Explora Todos los Productos'}
                 </h2>
                 {activeCategory && CATEGORY_SEO_MAP[activeCategory] && (
-                  <p className="text-xs text-[#382A30]/70 mt-1 max-w-2xl">
+                  <p className="text-xs text-[#382A30]/70 mt-1 max-w-xl md:max-w-md lg:max-w-2xl">
                     {CATEGORY_SEO_MAP[activeCategory].subtitle}
                   </p>
                 )}
               </div>
 
-              {/* Controls: Cohesive Featured pill button & Sort selector */}
-              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 text-xs">
+              {/* Controls: Cohesive Featured pill button & Sort selector — always single-line and never crushed on tablet */}
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 text-xs shrink-0 self-start md:self-end">
                 <button
                   type="button"
                   onClick={() => setOnlyFeatured((prev) => !prev)}
                   aria-pressed={onlyFeatured}
-                  className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer select-none ${
+                  className={`px-3 sm:px-3.5 lg:px-3 py-1.5 sm:py-2 lg:py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer select-none whitespace-nowrap shrink-0 ${
                     onlyFeatured
                       ? 'bg-[#B9788B] text-white border-[#B9788B] shadow-2xs'
                       : 'bg-white text-[#382A30]/80 border-[#E8BFCB] hover:border-[#B9788B] hover:text-[#382A30]'
@@ -706,14 +706,14 @@ export default function App() {
                   <span>Sólo destacados</span>
                 </button>
 
-                <div className="relative inline-flex items-center border border-[#E8BFCB] rounded-xl bg-white hover:border-[#B9788B] transition-colors">
+                <div className="relative inline-flex items-center border border-[#E8BFCB] rounded-xl bg-white hover:border-[#B9788B] transition-colors shrink-0">
                   <ArrowUpDown className="w-3.5 h-3.5 text-[#B9788B] pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 select-none" />
                   <select
                     value={sortBy}
                     onChange={(e) =>
                       setSortBy(e.target.value as 'all' | 'price-asc' | 'price-desc')
                     }
-                    className="w-full bg-transparent focus:outline-none text-[#382A30] font-medium cursor-pointer pl-7 pr-3 py-1.5 text-xs rounded-xl"
+                    className="w-full bg-transparent focus:outline-none text-[#382A30] font-medium cursor-pointer pl-7 pr-3 py-1.5 sm:py-2 lg:py-1.5 text-xs rounded-xl whitespace-nowrap"
                   >
                     <option value="all">Ordenar: Todos</option>
                     <option value="price-asc">Precio: Menor a mayor</option>
@@ -864,7 +864,7 @@ export default function App() {
             <div
               id="grid-productos"
               key={activeCategory || 'all'}
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-1 duration-300"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5 md:gap-4 lg:gap-4 animate-in fade-in slide-in-from-bottom-1 duration-300"
             >
               {sortedProducts.map((product) => (
                 <ProductCard

@@ -222,7 +222,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-[#FFFDF9]/95 backdrop-blur-md border-b border-[#E8BFCB]/40 transition-colors w-full">
       {/* Main Top Bar */}
-      <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 md:px-5 lg:px-8 h-16 sm:h-18 md:h-20 flex items-center justify-between gap-1 sm:gap-4 md:gap-4 lg:gap-6 xl:gap-8">
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 md:px-4 lg:px-8 h-16 sm:h-18 md:h-18 lg:h-20 flex items-center justify-between gap-1 sm:gap-4 md:gap-2.5 lg:gap-6 xl:gap-8">
         
         {/* Zone 1: Brand Wordmark with Centered Imagotipo */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
@@ -231,9 +231,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               onNavigateCategory(null);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="text-left group cursor-pointer focus-visible:outline-none flex items-center gap-1.5 sm:gap-2.5 md:gap-3"
+            className="text-left group cursor-pointer focus-visible:outline-none flex items-center gap-1.5 sm:gap-2.5 md:gap-2 lg:gap-3"
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center overflow-hidden shrink-0 relative">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-9.5 md:h-9.5 lg:w-11 lg:h-11 rounded-full flex items-center justify-center overflow-hidden shrink-0 relative">
               <img
                 src="/assets/aistudio/dulzara_logo_transparent.png"
                 alt="Logo Dulzara"
@@ -242,21 +242,23 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-1 sm:gap-1.5">
-                <span className="text-base sm:text-2xl md:text-xl lg:text-2xl font-serif-brand font-semibold tracking-wider text-[#382A30] group-hover:text-[#B9788B] transition-colors whitespace-nowrap shrink-0">
+                <span className="text-base sm:text-xl md:text-lg lg:text-2xl font-serif-brand font-semibold tracking-wider text-[#382A30] group-hover:text-[#B9788B] transition-colors whitespace-nowrap shrink-0">
                   DULZARA
                 </span>
                 <span className="text-[#B9788B] text-xs font-serif leading-none select-none" aria-hidden="true">✦</span>
               </div>
-              <span className="text-[9px] lg:text-[10px] uppercase tracking-widest text-[#B9788B] font-sans -mt-0.5 hidden sm:block font-medium">
+              <span className="text-[9px] md:text-[8.5px] lg:text-[10px] uppercase tracking-widest text-[#B9788B] font-sans -mt-0.5 hidden sm:block font-medium">
                 Belleza & Cuidado
               </span>
             </div>
           </button>
         </div>
 
-        {/* Zone 2: Desktop Airy Editorial Category Navigation — only categories with available products */}
+        {/* Zone 2: Desktop & Tablet Airy Editorial Category Navigation — only categories with available products */}
         <nav
-          className="hidden md:flex md:flex-1 items-center justify-center md:gap-6 lg:gap-9 xl:gap-11 md:text-[14px] lg:text-[15px] tracking-[0.01em] min-w-0 md:px-2 lg:px-4 transition-all duration-200"
+          className={`hidden md:flex md:flex-1 items-center justify-center ${
+            showSearchInput ? 'md:gap-2.5 lg:gap-9 xl:gap-11' : 'md:gap-4 lg:gap-9 xl:gap-11'
+          } md:text-[13px] lg:text-[15px] tracking-[0.01em] min-w-0 md:px-1.5 lg:px-4 overflow-x-auto no-scrollbar transition-all duration-200`}
         >
           <button
             onClick={() => handleCategoryClick(null)}
@@ -284,13 +286,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Zone 3: Search, Admin Access, Shopping Bag, and Mobile Menu Pill */}
-        <div className="flex items-center justify-end gap-1 sm:gap-3 md:gap-2.5 lg:gap-3 shrink-0">
+        <div className="flex items-center justify-end gap-1 sm:gap-3 md:gap-2 lg:gap-3 shrink-0">
           
           {/* Predictive Search Container with Autocomplete Dropdown */}
           <div className="static sm:relative flex items-center" ref={searchContainerRef}>
             {showSearchInput ? (
-              <div className="flex items-center h-9 sm:h-9.5 md:h-10 bg-[#FDF6F8] focus-within:bg-white border border-[#E8BFCB] focus-within:border-[#B9788B] focus-within:ring-2 focus-within:ring-[#F7E5E9] rounded-full pl-3 pr-1.5 sm:pl-3.5 sm:pr-2 md:pl-4 md:pr-2 w-38 min-[380px]:w-44 min-[420px]:w-52 sm:w-64 md:w-56 lg:w-64 xl:w-72 transition-all duration-200 shadow-[0_2px_10px_-2px_rgba(185,120,139,0.2)] animate-in fade-in zoom-in-95">
-                <Search className="w-4 h-4 md:w-[17px] md:h-[17px] text-[#B9788B] mr-1.5 sm:mr-2 shrink-0" />
+              <div className="flex items-center h-9 sm:h-9.5 md:h-9 lg:h-10 bg-[#FDF6F8] focus-within:bg-white border border-[#E8BFCB] focus-within:border-[#B9788B] focus-within:ring-2 focus-within:ring-[#F7E5E9] rounded-full pl-3 pr-1.5 sm:pl-3.5 sm:pr-2 md:pl-3 md:pr-1.5 lg:pl-4 lg:pr-2 w-38 min-[380px]:w-44 min-[420px]:w-52 sm:w-64 md:w-44 lg:w-64 xl:w-72 transition-all duration-200 shadow-[0_2px_10px_-2px_rgba(185,120,139,0.2)] animate-in fade-in zoom-in-95">
+                <Search className="w-4 h-4 md:w-4 md:h-4 lg:w-[17px] lg:h-[17px] text-[#B9788B] mr-1.5 sm:mr-2 shrink-0" />
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -300,7 +302,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onFocus={() => setDropdownOpen(true)}
                   onKeyDown={handleKeyDown}
                   autoFocus
-                  className="w-full h-full bg-transparent text-xs sm:text-[13px] md:text-[14px] font-medium leading-none text-[#382A30] placeholder-[#382A30]/45 focus:outline-none min-w-0"
+                  className="w-full h-full bg-transparent text-xs sm:text-[13px] md:text-[13px] lg:text-[14px] font-medium leading-none text-[#382A30] placeholder-[#382A30]/45 focus:outline-none min-w-0"
                 />
                 {searchQuery ? (
                   <button
@@ -311,7 +313,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     aria-label="Borrar texto"
                     className="w-6 h-6 rounded-full flex items-center justify-center text-[#B9788B]/80 hover:text-[#382A30] hover:bg-[#F7E5E9] transition-colors shrink-0 cursor-pointer"
                   >
-                    <X className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    <X className="w-3.5 h-3.5 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
                   </button>
                 ) : (
                   <button
@@ -322,7 +324,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     aria-label="Cerrar buscador"
                     className="w-6 h-6 rounded-full flex items-center justify-center text-[#B9788B]/80 hover:text-[#382A30] hover:bg-[#F7E5E9] transition-colors shrink-0 cursor-pointer"
                   >
-                    <X className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    <X className="w-3.5 h-3.5 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
                   </button>
                 )}
               </div>
@@ -334,13 +336,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                   setTimeout(() => searchInputRef.current?.focus(), 50);
                 }}
                 aria-label="Abrir buscador"
-                className="group inline-flex items-center justify-center w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-auto md:h-10 md:pl-1.5 md:pr-4 rounded-full text-[#382A30]/85 hover:text-[#B9788B] hover:bg-[#F7E5E9]/65 transition-all duration-200 cursor-pointer md:gap-2.5 md:bg-[#FDF6F8] md:hover:bg-[#F7E5E9]/90 md:border md:border-[#E8BFCB] md:hover:border-[#B9788B]/80 md:text-[#382A30] md:shadow-2xs active:scale-95"
+                className="group inline-flex items-center justify-center w-9 h-9 sm:w-9.5 sm:h-9.5 md:w-auto md:h-9 lg:h-10 md:pl-1.5 md:pr-3 lg:pl-1.5 lg:pr-4 rounded-full text-[#382A30]/85 hover:text-[#B9788B] hover:bg-[#F7E5E9]/65 transition-all duration-200 cursor-pointer md:gap-2 lg:gap-2.5 md:bg-[#FDF6F8] md:hover:bg-[#F7E5E9]/90 md:border md:border-[#E8BFCB] md:hover:border-[#B9788B]/80 md:text-[#382A30] md:shadow-2xs active:scale-95"
               >
                 <Search
                   strokeWidth={2.25}
-                  className="w-5 h-5 text-[#B9788B] md:w-7 md:h-7 md:p-1.5 md:rounded-full md:bg-[#B9788B] md:text-white md:shadow-2xs shrink-0 transition-transform duration-200 group-hover:scale-105"
+                  className="w-5 h-5 text-[#B9788B] md:w-6 md:h-6 md:p-1 lg:w-7 lg:h-7 lg:p-1.5 md:rounded-full md:bg-[#B9788B] md:text-white md:shadow-2xs shrink-0 transition-transform duration-200 group-hover:scale-105"
                 />
-                <span className="hidden md:inline-flex items-center justify-center flex-1 text-center text-[13.5px] font-semibold leading-none tracking-[0.01em] text-[#382A30]/85 group-hover:text-[#382A30] -translate-y-[0.5px]">
+                <span className="hidden md:inline-flex items-center justify-center flex-1 text-center md:text-[12.5px] lg:text-[13.5px] font-semibold leading-none tracking-[0.01em] text-[#382A30]/85 group-hover:text-[#382A30] -translate-y-[0.5px]">
                   Buscar
                 </span>
               </button>
@@ -502,17 +504,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenCart}
             aria-label="Abrir bolsa de compras"
-            className="relative inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 md:px-5 py-1.5 sm:py-2 md:py-0 md:h-10 rounded-full bg-[#B9788B] hover:bg-[#a6687a] text-white transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer"
+            className="relative inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 md:px-3.5 lg:px-5 py-1.5 sm:py-2 md:py-0 md:h-9 lg:h-10 rounded-full bg-[#B9788B] hover:bg-[#a6687a] text-white transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer"
           >
             <div className="relative flex items-center justify-center">
-              <ShoppingBag className="w-4 h-4 md:w-[17px] md:h-[17px]" />
+              <ShoppingBag className="w-4 h-4 md:w-4 md:h-4 lg:w-[17px] lg:h-[17px]" />
               {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-[#382A30] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center tabular-nums">
                   {cartCount}
                 </span>
               )}
             </div>
-            <span className="text-xs md:text-[14px] font-medium leading-none hidden sm:inline-flex items-center whitespace-nowrap">
+            <span className="text-xs md:text-[12.5px] lg:text-[14px] font-medium leading-none hidden sm:inline-flex items-center whitespace-nowrap">
               {cartCount > 0 ? formatCOP(cartSubtotal) : 'Bolsa'}
             </span>
           </button>
@@ -538,9 +540,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Navigation Drawer — Boutique Tactile Category Experience */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-[#E8BFCB]/60 bg-gradient-to-b from-[#FFFDF9] via-[#FFF9FA] to-[#FDF3F6] px-3 pt-3 pb-2.5 shadow-[0_14px_30px_-10px_rgba(56,42,48,0.12)] animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="md:hidden border-t border-[#E8BFCB]/60 bg-gradient-to-b from-[#FFFDF9] via-[#FFF9FA] to-[#FDF3F6] px-3 sm:px-6 pt-3 sm:pt-4 pb-2.5 sm:pb-3.5 shadow-[0_14px_30px_-10px_rgba(56,42,48,0.12)] animate-in fade-in slide-in-from-top-1 duration-200">
           {/* Div 1: Tactile Boutique Category Grid (zero truncated text, hand-crafted multi-tone cosmetic illustrations) */}
-          <div className="grid grid-cols-2 gap-2 pb-2.5 border-b border-[#E8BFCB]/45">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5 pb-2.5 border-b border-[#E8BFCB]/45">
             {(() => {
               const isAllSelected = activeCategory === null && !searchQuery;
               const totalCards = 1 + visibleCategories.length;
@@ -651,7 +653,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     onClick={() => handleCategoryClick(null)}
                     className={`group relative text-left px-2.5 py-2.5 rounded-2xl border transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center gap-2.5 ${
-                      spanFullFirstCard ? 'col-span-2' : ''
+                      spanFullFirstCard ? 'col-span-2 sm:col-span-1' : ''
                     } ${
                       isAllSelected
                         ? 'bg-[#F7E5E9] border-[#B9788B] shadow-[0_3px_12px_-4px_rgba(185,120,139,0.28)]'

@@ -210,12 +210,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         </div>
 
         {/* Modal Scrollable Content */}
-        <div className="overflow-y-auto p-4 sm:p-8">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-8 items-start">
+        <div className="overflow-y-auto p-4 sm:p-6 md:p-6 lg:p-8">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 md:gap-6 lg:gap-8 items-start">
             
             {/* Gallery Left Frame */}
             <div className="md:col-span-6 space-y-3.5 sm:space-y-4">
-              <div className="relative aspect-[4/3.6] sm:aspect-square w-full rounded-2xl overflow-hidden border border-[#E8BFCB]/40 bg-[#F7E5E9]/20 shadow-xs">
+              <div className="relative aspect-[4/3.6] sm:aspect-[16/11] md:aspect-square lg:aspect-square w-full rounded-2xl overflow-hidden border border-[#E8BFCB]/40 bg-[#F7E5E9]/20 shadow-xs">
                 <BeautyImage
                   src={displayImageUrl}
                   alt={selectedShade ? `${product.name} - ${selectedShade.name}` : product.name}
@@ -235,7 +235,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             <div className="md:col-span-6 space-y-4 sm:space-y-5">
               
               <div>
-                <h2 className="text-xl sm:text-3xl font-serif-brand font-semibold text-[#382A30] leading-snug">
+                <h2 className="text-xl sm:text-2xl md:text-2xl lg:text-3xl font-serif-brand font-semibold text-[#382A30] leading-snug">
                   {product.name}
                 </h2>
                 <div className="mt-2 flex flex-wrap items-center gap-2.5">
@@ -465,7 +465,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-3 pt-2">
                   <button
                     onClick={handleAdd}
                     disabled={isOutOfStock}

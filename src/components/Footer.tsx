@@ -31,10 +31,10 @@ export const Footer: React.FC<FooterProps> = ({
     <footer className="bg-[#382A30] text-[#FFFDF9] border-t border-[#382A30] pt-14 pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-8 lg:gap-12">
           
           {/* Brand info */}
-          <div className="md:col-span-5 space-y-4">
+          <div className="sm:col-span-2 md:col-span-5 space-y-4">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center shrink-0">
                 <img
@@ -73,7 +73,7 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
 
           {/* Catalog Categories */}
-          <div className="md:col-span-3 space-y-3">
+          <div className="sm:col-span-1 md:col-span-3 space-y-3">
             <h4 className="text-xs uppercase tracking-wider font-semibold text-[#E8BFCB]">
               Colecciones
             </h4>
@@ -95,7 +95,7 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
 
           {/* Delivery & Trust */}
-          <div className="md:col-span-4 space-y-3">
+          <div className="sm:col-span-1 md:col-span-4 space-y-3">
             <h4 className="text-xs uppercase tracking-wider font-semibold text-[#E8BFCB]">
               Compromiso Dulzara
             </h4>
