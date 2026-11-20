@@ -22,6 +22,16 @@ export function getCartItemKey(productId: string, shadeId?: string): string {
   return `${productId}_${shadeId || 'default'}`;
 }
 
+const COP_FORMATTER = new Intl.NumberFormat('es-CO', {
+  style: 'decimal',
+  maximumFractionDigits: 0,
+});
+
+const CO_DATE_FORMATTER = new Intl.DateTimeFormat('es-CO', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
+
 /**
  * Format numbers into currency format ($ XX.XXX)
  * Example: 45000 -> "$ 45.000"
@@ -30,43 +40,8 @@ export function formatCOP(amount: number): string {
   if (isNaN(amount) || amount === null || amount === undefined) {
     return '$ 0';
   }
-  const formatted = new Intl.NumberFormat('es-CO', {
-    style: 'decimal',
-    maximumFractionDigits: 0,
-  }).format(Math.round(amount));
-
-  return `$ ${formatted}`;
+  return `$ ${COP_FORMATTER.format(Math.round(amount))}`;
 }
-
-/**
- * List of Colombian Departments and representative capital cities
- */
-export const COLOMBIAN_DEPARTMENTS: { department: string; cities: string[] }[] = [
-  { department: 'Bogotá D.C.', cities: ['Bogotá'] },
-  { department: 'Antioquia', cities: ['Medellín', 'Envigado', 'Bello', 'Itagüí', 'Rionegro', 'Sabaneta'] },
-  { department: 'Valle del Cauca', cities: ['Cali', 'Palmira', 'Buga', 'Tuluá', 'Buenaventura', 'Jamundí'] },
-  { department: 'Cundinamarca', cities: ['Chía', 'Soacha', 'Zipaquirá', 'Facatativá', 'Fusagasugá', 'Madrid', 'Mosquera'] },
-  { department: 'Atlántico', cities: ['Barranquilla', 'Soledad', 'Puerto Colombia', 'Malambo'] },
-  { department: 'Santander', cities: ['Bucaramanga', 'Floridablanca', 'Girón', 'Piedecuesta', 'Barrancabermeja'] },
-  { department: 'Bolívar', cities: ['Cartagena', 'Magangué', 'Turbaco'] },
-  { department: 'Caldas', cities: ['Manizales', 'Villamaría', 'Chinchiná'] },
-  { department: 'Risaralda', cities: ['Pereira', 'Dosquebradas', 'Santa Rosa de Cabal'] },
-  { department: 'Quindío', cities: ['Armenia', 'Calarcá', 'Montenegro', 'Quimbaya'] },
-  { department: 'Tolima', cities: ['Ibagué', 'Espinal', 'Melgar'] },
-  { department: 'Huila', cities: ['Neiva', 'Pitalito', 'Garzón'] },
-  { department: 'Norte de Santander', cities: ['Cúcuta', 'Los Patios', 'Villa del Rosario', 'Ocaña'] },
-  { department: 'Meta', cities: ['Villavicencio', 'Acacías', 'Granada'] },
-  { department: 'Boyacá', cities: ['Tunja', 'Duitama', 'Sogamoso', 'Chiquinquirá', 'Villa de Leyva'] },
-  { department: 'Nariño', cities: ['Pasto', 'Ipiales', 'Tumaco'] },
-  { department: 'Córdoba', cities: ['Montería', 'Cereté', 'Lorica'] },
-  { department: 'Magdalena', cities: ['Santa Marta', 'Ciénaga', 'Fundación'] },
-  { department: 'Cesar', cities: ['Valledupar', 'Aguachica'] },
-  { department: 'Sucre', cities: ['Sincelejo', 'Corozal'] },
-  { department: 'Cauca', cities: ['Popayán', 'Santander de Quilichao'] },
-  { department: 'La Guajira', cities: ['Riohacha', 'Maicao'] },
-  { department: 'Casanare', cities: ['Yopal', 'Aguazul'] },
-  { department: 'San Andrés y Providencia', cities: ['San Andrés'] },
-];
 
 /**
  * Builds a clear, professional WhatsApp message for finalizing the order
@@ -151,11 +126,7 @@ export function createWhatsAppUrl(phoneNumber: string, message: string): string 
  */
 export function formatDateCO(dateString: string): string {
   try {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('es-CO', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(date);
+    return CO_DATE_FORMATTER.format(new Date(dateString));
   } catch {
     return dateString;
   }

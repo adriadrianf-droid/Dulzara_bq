@@ -9,7 +9,7 @@ interface BeautyImageProps {
   priority?: boolean;
 }
 
-export const BeautyImage: React.FC<BeautyImageProps> = ({
+export const BeautyImage: React.FC<BeautyImageProps> = React.memo(({
   src,
   alt,
   className = '',
@@ -83,4 +83,4 @@ export const BeautyImage: React.FC<BeautyImageProps> = ({
       )}
     </div>
   );
-};
+});

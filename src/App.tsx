@@ -425,20 +425,27 @@ export default function App() {
     setCartItems([]);
   };
 
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const cartSubtotal = cartItems.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0
-  );
+  const { cartCount, cartSubtotal, inCartProductIds } = useMemo(() => {
+    let count = 0;
+    let subtotal = 0;
+    const ids = new Set<string>();
+    for (const item of cartItems) {
+      count += item.quantity;
+      subtotal += item.product.price * item.quantity;
+      ids.add(item.product.id);
+    }
+    return { cartCount: count, cartSubtotal: subtotal, inCartProductIds: ids };
+  }, [cartItems]);
 
   // Global search matches across all available customer products (stock > 0)
   const allSearchMatches = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    return customerProducts.filter((p) =>
-      matchesSearchQuery(p.name, searchQuery) ||
-      matchesSearchQuery(p.description || '', searchQuery) ||
-      matchesSearchQuery(p.shortDescription || '', searchQuery) ||
-      matchesSearchQuery(p.category || '', searchQuery)
+    return customerProducts.filter(
+      (p) =>
+        matchesSearchQuery(p.name, searchQuery) ||
+        matchesSearchQuery(p.description || '', searchQuery) ||
+        matchesSearchQuery(p.shortDescription || '', searchQuery) ||
+        matchesSearchQuery(p.category || '', searchQuery)
     );
   }, [customerProducts, searchQuery]);
 
@@ -459,25 +466,20 @@ export default function App() {
     }, {} as Record<string, number>);
   }, [customerProducts, searchQuery, allSearchMatches]);
 
-  // Filtered & sorted catalog with accent, case, and plural tolerance (only in-stock products for customers)
-  const filteredProducts = customerProducts.filter((product) => {
-    const matchesCategory = !activeCategory || product.category === activeCategory;
-    const matchesSearch =
-      !searchQuery.trim() ||
-      matchesSearchQuery(product.name, searchQuery) ||
-      matchesSearchQuery(product.description || '', searchQuery) ||
-      matchesSearchQuery(product.shortDescription || '', searchQuery) ||
-      matchesSearchQuery(product.category || '', searchQuery);
-    const matchesFeatured = !onlyFeatured || Boolean(product.isFeatured);
+  // Filtered & sorted catalog (reuses allSearchMatches when searching so text matching never runs twice)
+  const sortedProducts = useMemo(() => {
+    const baseList = searchQuery.trim() ? allSearchMatches : customerProducts;
+    const filtered = baseList.filter((product) => {
+      const matchesCategory = !activeCategory || product.category === activeCategory;
+      const matchesFeatured = !onlyFeatured || Boolean(product.isFeatured);
+      return matchesCategory && matchesFeatured;
+    });
 
-    return matchesCategory && matchesSearch && matchesFeatured;
-  });
-
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortBy === 'price-asc') return a.price - b.price;
-    if (sortBy === 'price-desc') return b.price - a.price;
-    return 0;
-  });
+    if (sortBy === 'all') return filtered;
+    return [...filtered].sort((a, b) =>
+      sortBy === 'price-asc' ? a.price - b.price : b.price - a.price
+    );
+  }, [customerProducts, allSearchMatches, searchQuery, activeCategory, onlyFeatured, sortBy]);
 
   // Order success handler
   const handleOrderSuccess = (order: Order, whatsappUrl: string) => {
@@ -870,7 +872,7 @@ export default function App() {
                   product={product}
                   onAddToCart={(p, shade) => handleAddToCart(p, 1, shade)}
                   onQuickView={handleSelectProduct}
-                  isItemInCart={cartItems.some((ci) => ci.product.id === product.id)}
+                  isItemInCart={inCartProductIds.has(product.id)}
                 />
               ))}
             </div>

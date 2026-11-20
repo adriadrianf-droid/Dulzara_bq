@@ -117,17 +117,18 @@ export const Footer: React.FC<FooterProps> = ({
 
         </div>
 
-        {/* Quiet Bottom Copyright & Admin link */}
+        {/* Quiet Bottom Copyright & Discreet Admin Icon */}
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#E8BFCB]">
           <p>© 2026 DULZARA. Todos los derechos reservados. Colombia.</p>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <span>Precios en Pesos Colombianos</span>
-            <span aria-hidden="true">·</span>
             <button
               onClick={onOpenAdmin}
-              className="text-white/60 hover:text-white underline underline-offset-4 transition-colors"
+              aria-label="Acceso interno"
+              title="Acceso interno"
+              className="p-1.5 rounded-full text-white/25 hover:text-[#E8BFCB] hover:bg-white/5 transition-colors cursor-pointer"
             >
-              Acceso Administrativo
+              <ShieldCheck className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

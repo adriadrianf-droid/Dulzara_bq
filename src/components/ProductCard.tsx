@@ -21,7 +21,7 @@ interface ProductCardProps {
   isItemInCart?: boolean;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({
+export const ProductCard: React.FC<ProductCardProps> = React.memo(({
   product,
   onAddToCart,
   onQuickView,
@@ -556,5 +556,5 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
     </div>
   );
-};
+});
 

@@ -12,7 +12,7 @@ interface SwatchCircleProps {
   className?: string;
 }
 
-export const SwatchCircle: React.FC<SwatchCircleProps> = ({
+export const SwatchCircle: React.FC<SwatchCircleProps> = React.memo(({
   colorHex,
   finish = 'matte',
   name,
@@ -120,4 +120,4 @@ export const SwatchCircle: React.FC<SwatchCircleProps> = ({
       {content}
     </button>
   );
-};
+});
